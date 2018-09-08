@@ -41,14 +41,32 @@ export class AppComponent implements OnInit {
     console.log(`loading complete.`);
 
     // prepare the spritesheet
-    // const texture = PIXI.utils.TextureCache['assets/images/chicken-spritesheet.png'];  // Create the `tileset` sprite from the texture
-    // const rectangle: Rectangle = new Rectangle(0, 0, 16, 16); // Create a rectangle object that defines the position and size of the sub-image you want to extract from the texture
-    // texture.frame = rectangle;  // Tell the texture to use that rectangular section
+    const texture = PIXI.utils.TextureCache['assets/images/chicken-spritesheet.png'];  // Create the `tileset` sprite from the texture
+    const rectangle: Rectangle = new Rectangle(0, 0, 16, 16); // Create a rectangle object that defines the position and size of the sub-image you want to extract from the texture
+    texture.frame = rectangle;  // Tell the texture to use that rectangular section
 
     // Create the sprite from the texture
-    // const bunny = new Sprite(texture);
+    const bunny = new Sprite(texture);
 
+    bunny.anchor.set(0.5);    // center the sprite's rotational anchor point
+    bunny.rotation = 0.5;     // rotate the bunny
+    bunny.pivot.set(0.5);     // center the sprites x,y pivot point
 
+    bunny.interactive = true;  // Touch, pointer and mouse events will be emitted if true
+    bunny.buttonMode = true;   // creates hand when hovering over sprite
+
+    bunny.position.set(this.app.renderer.view.width / 2, this.app.screen.height / 2); // move the sprite to the center of the screen
+
+    this.app.stage.addChild(bunny); // adds the sprite to the stage
+
+    // Listen for animate update
+    this.app.ticker.add((delta) => {
+
+        bunny.x += this.ranInt(-1, 1);
+        bunny.y += this.ranInt(-1, 1);
+        bunny.x = bunny.x < this.app.screen.left ? this.app.screen.left : bunny.x > this.app.screen.right ? this.app.screen.right : bunny.x;
+        bunny.y = bunny.y < this.app.screen.top ? this.app.screen.top : bunny.y > this.app.screen.bottom ? this.app.screen.bottom : bunny.y;
+    });
   }
 
   ranInt(min: number, max: number) {
