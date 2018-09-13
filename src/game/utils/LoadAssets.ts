@@ -8,13 +8,10 @@ declare var PIXI: any; // instead of importing pixi like some tutorials say to d
 
 export class LoadAssets {
 
-    constructor(public game: Game) {
+    constructor(public game: Game, assets: Array<String>) {
 
         // open the loader
-        PIXI.loader.add([
-            'assets/images/chicken-spritesheet.json',
-            'assets/images/terrian-01-spritesheet.json'
-        ])
+        PIXI.loader.add(assets)
             .on('progress', this.loadProgressHandler)         // monitors progress in console only
             .load(game.loaded.bind(game));                     // setup() runs after assets are loaded
     }

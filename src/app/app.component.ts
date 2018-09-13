@@ -27,6 +27,6 @@ export class AppComponent implements OnInit {
         this.pixiContainer.nativeElement.appendChild(this.app.view);
 
         // start the game
-        this.game = new Game(this.app);
+        this.game = Game.getInstance(this.app);
     }
 }

@@ -8,6 +8,9 @@ import {ColorReplaceFilter} from '@pixi/filter-color-replace';
 
 export class NPC extends GameObj {
 
+    public NPC_SPEED_X = .7;
+    public NPC_SPEED_Y = .25;
+
     constructor(
         public app: Application,
         frames: Array<Texture>,
@@ -27,17 +30,17 @@ export class NPC extends GameObj {
 
         // AI controls
         const s = this.s;
-        if (F.ranInt(1000) > 998)
+        if (F.ranInt(1000) > 998)     // random change they will turn around
         {
             s.scale.x *= -1;
-            this.v.x = - s.scale.x / 3;
+            this.v.x = - s.scale.x * this.NPC_SPEED_X;
         }
 
-        if (F.ranInt(1000) > 995)
+        if (F.ranInt(1000) > 995)    // random change they will stop or start moving
         {
             if (this.v.x === 0) {
-                this.v.x = - s.scale.x / 3;
-                this.v.y = F.ranInt(-20, 20) / 70;
+                this.v.x = - s.scale.x * this.NPC_SPEED_X;
+                this.v.y = this.NPC_SPEED_Y * F.ranInt(0, 100) / 100;
             }
             else this.v.y = this.v.x = 0;
         }

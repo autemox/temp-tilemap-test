@@ -4,41 +4,49 @@ import { Player } from './world/objs/Player';
 import { NPC } from './world/objs/NPC';
 import { F } from './utils/F';
 import { LoadAssets } from './utils/LoadAssets';
-import { CreateWorld } from './world/CreateWorld';
+import { World } from './world/World';
 import { UI } from './UI';
+import { PixiUtils } from './utils/PixiUtils';
 declare var PIXI: any; // instead of importing pixi like some tutorials say to do use declare
 
 export class Game {
+
+    // class Game is a singleton class
+    private static instance: Game;
 
     // game state
     public state: Function;                            // state of the game ie play, pause
     public ui: UI;
 
     // world heirarchy
-    public world: Container = new PIXI.Container();    // container all sprites and tiles go into
-    public objs: Array<GameObj|Player|NPC> = [];       // Array of Game Objects, including Clients and Player
-    public player: Player;                             // the current player
+    public world: World;                           // container all sprites and tiles go into
 
-    constructor(public app: Application) {
+    // asset list
+    public assets: Array<String> = [
+        'assets/images/chicken-spritesheet.json',
+        'assets/images/terrian-01-spritesheet.json'
+    ];
+
+    private constructor(public app: Application) {      // constructor is private b/c Game is a singleton class
 
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;   // retain pixelation
-
-        // apply stage filters
-        //app.stage.filters = [
-        //    new PIXI.filters.GodrayFilter()
-        //];
 
         // load UI
         this.ui = new UI(this);
 
         // load assets
-        const loadWorld = new LoadAssets(this);
+        const loadWorld = new LoadAssets(this, this.assets);
+    }
+
+    static getInstance(app: Application= null) {        // getInstance creates and returns the singleton class, Game
+        if (!Game.instance && app) Game.instance = new Game(app);  // create the instance if not yet created
+        return Game.instance;
     }
 
    loaded() {
 
         // create the world
-        const createWorld = new CreateWorld(this.app, this.world, this.objs, this.player);
+        this.world = new World(this.app);
 
         // begin the game
         this.app.ticker.add((delta) => this.gameLoop(delta));
@@ -61,12 +69,12 @@ export class Game {
     play(delta) {
 
         // loop through game objects and update them
-        for (let i = 0, len = this.objs.length; i < len; i++)
+        for (let i = 0, len = this.world.objs.length; i < len; i++)
         {
-           this.objs[i].update(delta);
+            this.world.objs[i].update(delta);
         }
 
         // sort sprites, lower on screen to the front
-        this.world.children.sort((a, b) => a.position.y > b.position.y ? 1 : 0);
+        this.world.container.children.sort((a, b) => a.position.y > b.position.y ? 1 : 0);
     }
 }

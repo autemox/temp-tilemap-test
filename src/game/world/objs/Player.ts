@@ -6,6 +6,8 @@ import {BevelFilter} from '@pixi/filter-bevel';
 
 export class Player extends GameObj {
 
+    public PLAYER_SPEED = 2;
+
     public left = F.keyboard(37);
     public up = F.keyboard(38);
     public right = F.keyboard(39);
@@ -25,14 +27,15 @@ export class Player extends GameObj {
         ];
 
         // watch controls
-        this.left.press = () => this.v.x = -1;
-        this.left.release = () => this.v.x = this.right.isUp ? 0 : 1;
-        this.right.press = () => this.v.x = 1;
-        this.right.release = () => this.v.x = this.left.isUp ? 0 : 1;
+        const speed = this.PLAYER_SPEED;
+        this.left.press = () => this.v.x = -speed;
+        this.left.release = () => this.v.x = this.right.isUp ? 0 : speed;
+        this.right.press = () => this.v.x = speed;
+        this.right.release = () => this.v.x = this.left.isUp ? 0 : speed;
 
-        this.up.press = () => this.v.y = -1;
-        this.up.release = () => this.v.y = this.down.isUp ? 0 : 1;
-        this.down.press = () => this.v.y = 1;
-        this.down.release = () => this.v.y = this.up.isUp ? 0 : 1;
+        this.up.press = () => this.v.y = -speed;
+        this.up.release = () => this.v.y = this.down.isUp ? 0 : speed;
+        this.down.press = () => this.v.y = speed;
+        this.down.release = () => this.v.y = this.up.isUp ? 0 : speed;
     }
 }
