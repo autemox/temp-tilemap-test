@@ -20,5 +20,7 @@ export class LoadAssets {
      loadProgressHandler(loader, resource) {                   // monitors progress (console only)
 
         console.log(`loaded ${resource.url}. Loading is ${loader.progress}% complete.`);
-    }
+        if (loader.json)
+        console.log(loader.json);
+        }
 }

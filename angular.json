@@ -28,6 +28,7 @@
             ],
             "scripts": [
               "node_modules/pixi.js/dist/pixi.js",
+              "node_modules/pixi-tilemap/dist/pixi-tilemap.js",
               "node_modules/pixi-filters/dist/pixi-filters.js"
             ]
           },

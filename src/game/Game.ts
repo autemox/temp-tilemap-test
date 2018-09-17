@@ -24,7 +24,12 @@ export class Game {
     // asset list
     public assets: Array<String> = [
         'assets/images/chicken-spritesheet.json',
-        'assets/images/terrian-01-spritesheet.json'
+        'assets/images/terrian-01-spritesheet.json',
+        'assets/map-001.json'
+    ];
+
+    public maps: Array<String> = [
+        'assets/map-001.json'
     ];
 
     private constructor(public app: Application) {      // constructor is private b/c Game is a singleton class

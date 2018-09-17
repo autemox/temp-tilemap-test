@@ -11,11 +11,17 @@ import { Game } from '../game/Game';
 export class AppComponent implements OnInit {
 
     @ViewChild('pixiContainer') pixiContainer;         // reference to <div> that contains our pixi application
+    @ViewChild('editorContainer') editorContainer;     // reference to <div> that contains our pixi application
     public app: Application;                           // Pixi Application
+    public editor: Application;                           // Pixi Application
     public game: Game;
 
     ngOnInit() {
 
+        this.startGame();
+    }
+
+    startGame() {
         // create the pixi application
         this.app = new PIXI.Application({
             width: 800,
