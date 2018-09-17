@@ -25,7 +25,7 @@ export class UI {
             new PIXI.TextStyle({
                 wordWrap: true,
                 wordWrapWidth: 100,
-                fontSize: 10,
+                fontSize: 12,
                 fill: 'white'
             })
         );
@@ -50,6 +50,7 @@ export class UI {
 
     update() {
 
-        this.message.text = '(debug)';
+        const cords = this.game.world.getTileCord(this.game.world.player.x, this.game.world.player.y);
+        this.message.text = 'Player Tile Cords: ' + cords.x + ' / ' + cords.y;
     }
 }

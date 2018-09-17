@@ -20,6 +20,7 @@ export class Game {
 
     // world heirarchy
     public world: World;                           // container all sprites and tiles go into
+    public god = 2;
 
     // asset list
     public assets: Array<String> = [
@@ -36,9 +37,6 @@ export class Game {
 
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;   // retain pixelation
 
-        // load UI
-        this.ui = new UI(this);
-
         // load assets
         const loadWorld = new LoadAssets(this, this.assets);
     }
@@ -51,11 +49,14 @@ export class Game {
    loaded() {
 
         // create the world
-        this.world = new World(this.app);
+        this.world = new World(this, this.app);
 
         // begin the game
         this.app.ticker.add((delta) => this.gameLoop(delta));
         this.state = this.play;
+
+        // load UI
+        this.ui = new UI(this);
    }
 
     gameLoop(delta) {
@@ -78,6 +79,12 @@ export class Game {
         {
             this.world.objs[i].update(delta);
         }
+
+        // add filter to entire world
+        this.app.stage.filters = [
+            new PIXI.filters.GodrayFilter(-20, 0.5, this.god, true, 0)
+        ];
+        this.god += .0001;
 
         // sort sprites, lower on screen to the front
         this.world.container.children.sort((a, b) => a.position.y > b.position.y ? 1 : 0);

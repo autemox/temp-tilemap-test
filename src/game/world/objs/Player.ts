@@ -3,6 +3,7 @@ import { F } from '../../utils/F';
 import { GameObj } from './GameObj';
 import {GlowFilter} from '@pixi/filter-glow';
 import {BevelFilter} from '@pixi/filter-bevel';
+import { Game } from '../../Game';
 
 export class Player extends GameObj {
 
@@ -14,11 +15,12 @@ export class Player extends GameObj {
     public down = F.keyboard(40);
 
     constructor(
+        public game: Game,
         public app: Application,
         frames: Array<Texture>,
         location: Point) {
 
-        super(app, frames, location);
+        super(game, app, frames, location);
 
         // add filter
         this.s.filters = [
@@ -37,5 +39,11 @@ export class Player extends GameObj {
         this.up.release = () => this.v.y = this.down.isUp ? 0 : speed;
         this.down.press = () => this.v.y = speed;
         this.down.release = () => this.v.y = this.up.isUp ? 0 : speed;
+    }
+
+    alive() {
+
+        // perform regular alive GameObj tasks
+        super.alive();
     }
 }

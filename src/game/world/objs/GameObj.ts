@@ -1,5 +1,6 @@
 import { Sprite, Application, Rectangle, Texture, Container, DisplayObject, Text, Point } from 'pixi.js';
 import { F } from '../../utils/F';
+import { Game } from '../../Game';
 
 export class GameObj {
 
@@ -14,7 +15,10 @@ export class GameObj {
     get y(): number { return this.l.y; }
     set y(y: number) { this.l.y = y; }
 
+    public collision: PIXI.Point = new PIXI.Point(0, 0);   // -1 or 1 for x or y showing collision
+
     constructor(
+        public game: Game,
         public app: Application,
         frames: Array<Texture>,
         location: Point) {
@@ -53,9 +57,18 @@ export class GameObj {
 
         const s = this.s;
 
+        // look for future collision
+        this.collision = new PIXI.Point(
+            this.game.world.mapCollision(this.x + this.v.x + (this.v.x > 0 ? this.s.width : -this.s.width) / 2, this.y) !== 0 ? this.v.x : 0,
+            this.game.world.mapCollision(this.x, this.y + this.v.y + (this.v.y > 0 ? this.s.height : -this.s.height) / 2) !== 0 ? this.v.y : 0
+        );
+
+        // look for current collsion (bugged)
+        if (this.game.world.mapCollision(this.x, this.y)) this.y += 5;
+
         // physics
-        this.x += this.v.x;
-        this.y += this.v.y;
+        if (!this.collision.x) this.x += this.v.x;
+        if (!this.collision.y) this.y += this.v.y;
 
         // visual
         if (this.v.x === 0 && this.v.y === 0) s.gotoAndStop(1);      // animation

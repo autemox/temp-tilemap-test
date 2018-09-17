@@ -5,6 +5,7 @@ import {GlowFilter} from '@pixi/filter-glow';
 import {BevelFilter} from '@pixi/filter-bevel';
 import {RGBSplitFilter} from '@pixi/filter-rgb-split';
 import {ColorReplaceFilter} from '@pixi/filter-color-replace';
+import { Game } from '../../Game';
 
 export class NPC extends GameObj {
 
@@ -12,11 +13,12 @@ export class NPC extends GameObj {
     public NPC_SPEED_Y = .25;
 
     constructor(
+        public game: Game,
         public app: Application,
         frames: Array<Texture>,
         location: Point) {
 
-        super(app, frames, location);
+        super(game, app, frames, location);
 
         // add filter
         this.s.filters = [
@@ -44,6 +46,9 @@ export class NPC extends GameObj {
             }
             else this.v.y = this.v.x = 0;
         }
+
+        if (this.collision.x !== 0) this.v.x *= -1;
+        if (this.collision.y !== 0) this.v.y *= -1;
 
         // perform regular alive GameObj tasks
         super.alive();
