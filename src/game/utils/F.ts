@@ -33,9 +33,47 @@ export module F {
         else return false;
     }
 
+    // GENERATES A NEW ID FOR AN OBJECT
+    export function generateID() {
+        return ranInt(1000);
+    }
+
     // RETURN CENTER OF ANY OBJECT WITH RECTANGLE-LIKE VARIABLES
     export function getCenter(o: any) {
         return new PIXI.Point(o.x + o.width / 2, o.y + o.height / 2);
+    }
+
+    // SEARCHES AN ARRAY OF OBJECTS AND MATCHES .id VARIABLE, RETURNS MATCHED
+    export function findByID(arr: Array<any>, id: number): any {
+        for (let i = 0; i < arr.length; i++) {
+            if (arr[i].id === id) return arr[i];
+        }
+        return undefined;
+    }
+
+    // SEARCHES AN ARRAY OF OBJECTS AND MATCHES .name VARIABLE, RETURNS MATCHED
+    export function findByName(arr: Array<any>, name: string): any {
+        for (let i = 0; i < arr.length; i++) {
+            if (arr[i].name === name) return arr[i];
+        }
+        return undefined;
+    }
+
+    // SEARCHES AN ARRAY OF OBJECTS AND REMOVES THE OBJECT WITH SPECIFIED ID
+    export function removeByID(arr: Array<any>, id: number): Array<any> {
+
+        arr.filter((e) => {
+            return e.id === id ? false : true;
+        });
+        return arr;
+    }
+
+    // SEARCHES AN ARRAY OF OBJECTS AND REMOVES THE OBJECT WITH SPECIFIED NAME
+    export function removeByName(arr: Array<any>, name: string): Array<any> {
+
+        return arr.filter((e) => {
+            return e.name === name ? false : true;
+        });
     }
 
     export function keyboard(keyCode: number) {
@@ -69,8 +107,6 @@ export module F {
       window.addEventListener('keyup', key.upHandler.bind(key), false);
       return key;
     }
-
-
 
     export function pointToPixel(tileSize: PIXI.Rectangle, point: PIXI.Point): PIXI.Point {        // converts a point from tile cords to pixel
         return new PIXI.Point(point.x * tileSize.width, point.y * tileSize.height);

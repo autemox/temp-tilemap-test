@@ -7,7 +7,7 @@ import {RGBSplitFilter} from '@pixi/filter-rgb-split';
 import {ColorReplaceFilter} from '@pixi/filter-color-replace';
 import { Game } from '../../Game';
 import { PixiUtils } from '../../utils/PixiUtils';
-import { ObjTemplate } from '../../models/ObjTemplate';
+import { ObjTemplate } from '../../model/ObjTemplate';
 
 export class NPC extends GameObj {
 
@@ -20,9 +20,11 @@ export class NPC extends GameObj {
         public game: Game,
         public app: Application,
         objTemplate: ObjTemplate,
-        location: Point) {
+        location: Point,
+        id: number,
+        public name: string) {
 
-        super(game, app, objTemplate, location);
+        super(game, app, objTemplate, location, id, name);
 
         // add filter
         this.s.filters = [
@@ -69,9 +71,8 @@ export class NPC extends GameObj {
         this.runCounter = this.RUN_LENGTH;               // set how long to run
 
         const frames = PIXI.utils.TextureCache['assets/images/egg.json_image'];         // select frames from textures spritesheet for use in this object
-        console.log('prepare egg', frames);
-        const o = this.game.world.addObject('egg', 'obj', new PIXI.Point(this.x, this.y));
-        console.log('created egg', o);
+        const o = this.game.world.addObject('egg', 'obj', new PIXI.Point(this.x, this.y), F.generateID());
+        o.s.rotation = 0.15;
     }
 
     startMoving() {

@@ -2,13 +2,14 @@ import { Sprite, Application, Rectangle, Texture, Container, DisplayObject, Text
 import { GameObj } from './objs/GameObj';
 import { Player } from './objs/Player';
 import { NPC } from './objs/NPC';
-import { Game } from './../Game';
+import { Game } from '../Game';
 import { F } from '../utils/F';
 import { PixiUtils } from '../utils/PixiUtils';
-import { AnimationTemplate } from './../models/AnimationTemplate';
-import { ObjTemplate } from './../models/ObjTemplate';
-import { TileSet } from './../models/TileSet';
-import { Layer } from './../models/Layer';
+import { AnimationTemplate } from '../model/AnimationTemplate';
+import { ObjTemplate } from '../model/ObjTemplate';
+import { TileSet } from '../model/TileSet';
+import { Layer } from '../model/Layer';
+import { Client } from './objs/Client';
 declare var PIXI: any; // instead of importing pixi like some tutorials say to do use declare
 
 
@@ -27,7 +28,7 @@ export class World {
     public tile: Rectangle = new PIXI.Rectangle(0, 0, 64, 64);      // width and height of a single tile (in pixels)
     public layers: Array<Layer> = [];                               // a list of terrian layers, their name, data (array of numbers representing the tile), and the pixiTileMap (composed image)
 
-    constructor(public game: Game, public app: Application, mapName: string) {
+    constructor(public game: Game, public app: Application, mapName: string, playerID: number, playerName: string) {
 
         // iterate loaded spritesheets
         game.templates.Keys().forEach((key) => {
@@ -77,7 +78,11 @@ export class World {
                         // tslint:disable-next-line:no-inferrable-types
                         const p = new PIXI.Point(objData.x, objData.y);                                        // select position the object starts at
 
-                        this.addObject(objData.name, objData.type.toLowerCase(), p);                           // create the object
+                        if (objData.type === 'player') p.x += F.ranInt(-100, 100);                             // modify position of new players slightly to prevent overlap on spawn
+                        if (objData.type === 'player') p.y += F.ranInt(-100, 100);
+
+                        const id = objData.type === 'player' ? playerID : F.generateID();                     // select an id for the object
+                        this.addObject(objData.name, objData.type.toLowerCase(), p, id, objData.type === 'player' ? playerName : undefined);  // create the object
                     }
                     this.app.stage.addChild(this.container);                             // add sprite container to the stage
                     break;
@@ -112,16 +117,17 @@ export class World {
 
     }
 
-    public addObject(name: string, type: string, p) {
+    public addObject(templateName: string, type: string, p, id: number, name?: string) {
 
         // find the template for this object
-        const objTemplate: ObjTemplate = this.game.templates.Item(name);
+        const objTemplate: ObjTemplate = this.game.templates.Item(templateName);
 
         // create the game object
         let o: any;
-        if (type === 'npc') o = new NPC(this.game, this.app, objTemplate, p);
-        else if (type === 'player') o = this.player = new Player(this.game, this.app, objTemplate, p);
-        else  o = new GameObj(this.game, this.app, objTemplate, p);
+        if (type === 'npc') o = new NPC(this.game, this.app, objTemplate, p, id, name);
+        else if (type === 'player') o = this.player = new Player(this.game, this.app, objTemplate, p, id, name);
+        else if (type === 'client') o = new Client(this.game, this.app, objTemplate, p, id, name);
+        else  o = new GameObj(this.game, this.app, objTemplate, p, id, name);
 
         // add game object to obj list and sprite to sprite container
         this.objs.push(o);
@@ -169,5 +175,16 @@ export class World {
 
     public getTileCord(x, y /*in pixels*/): PIXI.Point {        // returns 2 numbers representing a location on the tile map (not in pixels)
         return new PIXI.Point(Math.floor(x / this.tile.width), Math.floor(y / this.tile.height));
+    }
+
+    // removes the entire world
+    public remove() {
+        for (let i = this.objs.length - 1; i >= 0; i--) {       // remove each object from the objects list
+            this.objs[i].remove();
+        }
+
+        for (let i = this.app.stage.children.length - 1; i >= 0; i--) {	  // remove all children from stage
+            this.app.stage.removeChild(this.app.stage.children[i]);
+        }
     }
 }

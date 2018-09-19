@@ -6,10 +6,11 @@ import { F } from './utils/F';
 import { LoadAssets } from './utils/LoadAssets';
 import { World } from './world/World';
 import { UI } from './UI';
-import { AnimationTemplate } from './models/AnimationTemplate';
-import { ObjTemplate } from './models/ObjTemplate';
+import { AnimationTemplate } from './model/AnimationTemplate';
+import { ObjTemplate } from './model/ObjTemplate';
 import { PixiUtils } from './utils/PixiUtils';
 import { Dictionary } from './utils/Dictionary';
+import { Connection } from './socket/Connection';
 declare var PIXI: any; // instead of importing pixi like some tutorials say to do use declare
 
 export class Game {
@@ -21,6 +22,9 @@ export class Game {
     public state: Function;                            // state of the game ie play, pause
     public ui: UI;
     public mouseFocused: Boolean;
+
+    // connection and networking
+    public connection: Connection;
 
     // world heirarchy
     public world: World;                           // container all sprites and tiles go into
@@ -45,9 +49,9 @@ export class Game {
             name: 'chicken',
             animationSpeed: 0.08,
             animations: {
-                stand: [1],
+                stand: [0],
                 walk: [1, 0, 2, 0],
-                idle: [4, 0, 0, 0, 4, 0, 4, 0, 0, 0, 0, 0, 0],
+                idle: [3, 0, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0],
                 death: [5, 6, 7, 6, 7, 8, 8]
             },
             speedX: 1.9,
@@ -59,9 +63,9 @@ export class Game {
             name: 'chick',
             animationSpeed: 0.25,
             animations: {
-                stand: [1],
+                stand: [13],
                 walk: [9, 13, 12, 13],
-                idle: [9, 13, 12, 11, 12, 13, 9, 9, 9, 9, 9, 9, 9, 9, 9],
+                idle: [12, 11, 10, 11, 12, 13, 13, 13, 13, 13, 13, 12, 11, 10, 11, 12, 13, 13, 13, 12, 11, 10, 11, 12, 13],
                 death: [5, 6, 7, 6, 7]
             },
             speedX: .8,
@@ -108,17 +112,30 @@ export class Game {
 
    loaded() {
 
-        // create the world
-        this.world = new World(this, this.app, 'map-001');
-
-        // begin the game
-        this.app.ticker.add((delta) => this.gameLoop(delta));
-        this.state = this.play;
-
-        // load UI
-        this.ui = new UI(this);
+        // connect to server
+        this.connection = new Connection(this);
    }
 
+   connected(playerID: number, playerName: string) {
+
+        // create the world
+        if (this.world) this.world.remove();                           // if not our first time connecting, remove the old world
+        this.world = new World(this, this.app, 'map-001', playerID, playerName);   // create a new world
+
+        if (!this.state) {
+                                                     // is this our first time connecting?
+            // load UI
+            this.ui = new UI(this);
+
+            // start game interval (1 second)
+            this.app.ticker.add((delta) => this.gameLoop(delta));      // interval every frame
+       }
+
+       // begin the game
+       this.state = this.play;                                         // this.state can be set to this.play or this.pause or undefined if game hasnt started yet
+   }
+
+    // repeats approx every frame (60 times per second)
     gameLoop(delta) {
 
         this.state(delta); // run the function of the current game state
@@ -150,7 +167,9 @@ export class Game {
                 -camera.y * this.app.stage.scale.x + this.app.screen.height / 2
             );
         }
-        
+
+        // networking
+        this.connection.update();
     }
 
     pause(delta) {

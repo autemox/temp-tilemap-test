@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { AppComponent } from './app.component';
 import { FormsModule } from '@angular/forms';
 import { JsonGeneratorComponent } from './json-generator/json-generator.component';
+import { SocketService } from '../game/socket/SocketService';
 
 @NgModule({
   declarations: [
@@ -13,7 +14,7 @@ import { JsonGeneratorComponent } from './json-generator/json-generator.componen
     BrowserModule,
     FormsModule
   ],
-  providers: [],
+  providers: [SocketService],
   bootstrap: [AppComponent]             // boostrap the app component
 })
 export class AppModule { }

@@ -4,9 +4,10 @@ import { GameObj } from './GameObj';
 import {GlowFilter} from '@pixi/filter-glow';
 import {BevelFilter} from '@pixi/filter-bevel';
 import { Game } from '../../Game';
-import { ObjTemplate } from '../../models/ObjTemplate';
+import { Client } from './Client';
+import { ObjTemplate } from '../../model/ObjTemplate';
 
-export class Player extends GameObj {
+export class Player extends Client {
 
     public type: String = 'player';                   // npc, player, client, or obj?
     public PLAYER_SPEED = 5;
@@ -20,9 +21,11 @@ export class Player extends GameObj {
         public game: Game,
         public app: Application,
         objTemplate: ObjTemplate,
-        location: Point) {
+        location: Point,
+        id: number,
+        public name: string) {
 
-        super(game, app, objTemplate, location);
+        super(game, app, objTemplate, location, id, name);
 
         // add filter
         this.s.filters = [
@@ -32,20 +35,32 @@ export class Player extends GameObj {
 
         // watch controls
         const speed = this.PLAYER_SPEED;
-        this.left.press = () => this.v.x = -speed;
-        this.left.release = () => this.v.x = this.right.isUp ? 0 : speed;
-        this.right.press = () => this.v.x = speed;
-        this.right.release = () => this.v.x = this.left.isUp ? 0 : speed;
+        this.left.press = () => this.velocityX = -speed;
+        this.left.release = () => this.velocityX = this.right.isUp ? 0 : speed;
+        this.right.press = () => this.velocityX = speed;
+        this.right.release = () => this.velocityX = this.left.isUp ? 0 : speed;
 
-        this.up.press = () => this.v.y = -speed;
-        this.up.release = () => this.v.y = this.down.isUp ? 0 : speed;
-        this.down.press = () => this.v.y = speed;
-        this.down.release = () => this.v.y = this.up.isUp ? 0 : speed;
+        this.up.press = () => this.velocityY = -speed;
+        this.up.release = () => this.velocityY = this.down.isUp ? 0 : speed;
+        this.down.press = () => this.velocityY = speed;
+        this.down.release = () => this.velocityY = this.up.isUp ? 0 : speed;
+    }
+
+    public set velocityX(x) {
+        this.v.x = x;
+        this.game.connection.update(true);
+    }
+    public set velocityY(y) {
+        this.v.y = y;
+        this.game.connection.update(true);
     }
 
     alive() {
 
         // perform regular alive GameObj tasks
         super.alive();
+
+        // location can be percise
+        this.s.position = this.l;
     }
 }
