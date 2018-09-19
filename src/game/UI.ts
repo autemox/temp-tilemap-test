@@ -4,6 +4,7 @@ import { Game } from './Game';
 import { Player } from './world/objs/Player';
 import { NPC } from './world/objs/NPC';
 import { F } from './utils/F';
+import { debug } from 'util';
 declare var PIXI: any; // instead of importing pixi like some tutorials say to do use declare
 
 export class UI {
@@ -50,7 +51,8 @@ export class UI {
 
     update() {
 
-        const cords = this.game.world.getTileCord(this.game.world.player.x, this.game.world.player.y);
-        this.message.text = 'Player Tile Cords: ' + cords.x + ' / ' + cords.y;
+        const cords = this.game.app.renderer.plugins.interaction.mouse.global;
+        this.message.text = 'Mouse Cords: ' + cords.x + ' / ' + cords.y + ' / ';
+
     }
 }

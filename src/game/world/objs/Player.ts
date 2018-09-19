@@ -4,10 +4,12 @@ import { GameObj } from './GameObj';
 import {GlowFilter} from '@pixi/filter-glow';
 import {BevelFilter} from '@pixi/filter-bevel';
 import { Game } from '../../Game';
+import { ObjTemplate } from '../../models/ObjTemplate';
 
 export class Player extends GameObj {
 
-    public PLAYER_SPEED = 2;
+    public type: String = 'player';                   // npc, player, client, or obj?
+    public PLAYER_SPEED = 5;
 
     public left = F.keyboard(37);
     public up = F.keyboard(38);
@@ -17,10 +19,10 @@ export class Player extends GameObj {
     constructor(
         public game: Game,
         public app: Application,
-        frames: Array<Texture>,
+        objTemplate: ObjTemplate,
         location: Point) {
 
-        super(game, app, frames, location);
+        super(game, app, objTemplate, location);
 
         // add filter
         this.s.filters = [

@@ -11,6 +11,7 @@ export class LoadAssets {
     constructor(public game: Game, assets: Array<String>) {
 
         // open the loader
+        console.log('[LoadAssets] loading', assets);
         PIXI.loader.add(assets)
             .on('progress', this.loadProgressHandler)         // monitors progress in console only
             .load(game.loaded.bind(game));                     // setup() runs after assets are loaded

@@ -54,7 +54,7 @@ export class JsonGeneratorComponent implements OnInit {
 
                     for (let j = 0; j <= img.width / tileWidth - 1; j++) {
 
-                        const frameNum = Math.floor(i * img.width / tileWidth) + j + 1;     // count frames from left to right like reading a book
+                        const frameNum = Math.floor(i * img.width / tileWidth) + j;     // count frames from left to right like reading a book
                         const n = frameNum + '.png';
                         sprite.frames[n] = {
                             frame: {

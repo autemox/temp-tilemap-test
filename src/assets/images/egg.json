@@ -1,0 +1,93 @@
+{
+  "meta": {
+    "app": "lss json-generator",
+    "image": "egg.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 468,
+      "h": 44
+    }
+  },
+  "frames": {
+    "0.png": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": "104",
+        "h": "44"
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": "104",
+        "h": "44"
+      },
+      "sourceSize": {
+        "w": "104",
+        "h": "44"
+      }
+    },
+    "1.png": {
+      "frame": {
+        "x": 104,
+        "y": 0,
+        "w": "104",
+        "h": "44"
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": "104",
+        "h": "44"
+      },
+      "sourceSize": {
+        "w": "104",
+        "h": "44"
+      }
+    },
+    "2.png": {
+      "frame": {
+        "x": 208,
+        "y": 0,
+        "w": "104",
+        "h": "44"
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": "104",
+        "h": "44"
+      },
+      "sourceSize": {
+        "w": "104",
+        "h": "44"
+      }
+    },
+    "3.png": {
+      "frame": {
+        "x": 312,
+        "y": 0,
+        "w": "104",
+        "h": "44"
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": "104",
+        "h": "44"
+      },
+      "sourceSize": {
+        "w": "104",
+        "h": "44"
+      }
+    }
+  }
+}

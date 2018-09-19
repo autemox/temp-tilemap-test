@@ -1,3 +1,6 @@
+import { Game } from '../Game';
+import { Rectangle, Point } from 'pixi.js';
+
 export module F {
 
     // ABOUT THIS CLASS
@@ -49,7 +52,7 @@ export module F {
                   key.isDown = true;
                   key.isUp = false;
               }
-              event.preventDefault();
+              if (Game.getInstance().mouseFocused) event.preventDefault();   // event.preventDefault() will disable all input boxes outside of canvas so we only have it enabled if mouse is in canvas
           },
 
           upHandler: event => {
@@ -58,15 +61,24 @@ export module F {
                   key.isDown = false;
                   key.isUp = true;
               }
-              event.preventDefault();
+              if (Game.getInstance().mouseFocused)event.preventDefault();
           }
       };
 
       window.addEventListener('keydown', key.downHandler.bind(key), false);
       window.addEventListener('keyup', key.upHandler.bind(key), false);
       return key;
-  }
+    }
 
+
+
+    export function pointToPixel(tileSize: PIXI.Rectangle, point: PIXI.Point): PIXI.Point {        // converts a point from tile cords to pixel
+        return new PIXI.Point(point.x * tileSize.width, point.y * tileSize.height);
+    }
+
+    export function pointToTile(tileSize: PIXI.Rectangle, point: PIXI.Point): PIXI.Point {        // converts a point from pixel cords to tile
+        return new PIXI.Point(Math.floor(point.x / tileSize.width), Math.floor(point.y / tileSize.height));
+    }
 
     export function randomPastelRgb() {
 
@@ -105,7 +117,18 @@ export module F {
           const hex = Math.round(x * 255).toString(16);
           return hex.length === 1 ? '0' + hex : hex;
         };
-        console.log('rgb', r, g, b);
         return [r, g, b];
       }
+
+    export function removePath(str: string): string {
+        // removes path from string ie ../tiled maps/terrian-01-spritesheet.tsx to terrian-01-spritesheet.tsx
+        const arr: Array<string> = str.split('/');
+        return arr[arr.length - 1];
+    }
+
+    export function removeExtension(str: string): string {
+        // removes extension from string ie terrian-01-spritesheet.tsx to terrian-01-spritesheet
+        const arr: Array<string> = str.split('.');
+        return arr[arr.length - 2];
+    }
 }

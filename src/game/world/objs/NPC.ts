@@ -6,19 +6,23 @@ import {BevelFilter} from '@pixi/filter-bevel';
 import {RGBSplitFilter} from '@pixi/filter-rgb-split';
 import {ColorReplaceFilter} from '@pixi/filter-color-replace';
 import { Game } from '../../Game';
+import { PixiUtils } from '../../utils/PixiUtils';
+import { ObjTemplate } from '../../models/ObjTemplate';
 
 export class NPC extends GameObj {
 
-    public NPC_SPEED_X = .7;
-    public NPC_SPEED_Y = .25;
+    public type: String = 'npc';                   // npc, player, client, or obj?
+    public RUN_LENGTH = 2 * 60;
+
+    public runCounter = 0;
 
     constructor(
         public game: Game,
         public app: Application,
-        frames: Array<Texture>,
+        objTemplate: ObjTemplate,
         location: Point) {
 
-        super(game, app, frames, location);
+        super(game, app, objTemplate, location);
 
         // add filter
         this.s.filters = [
@@ -32,17 +36,20 @@ export class NPC extends GameObj {
 
         // AI controls
         const s = this.s;
-        if (F.ranInt(1000) > 998)     // random change they will turn around
+
+        if (this.runCounter > 0) {         // if running, countdown to stop
+            this.runCounter --;
+            if (this.runCounter === 0) this.startMoving();   // stop running
+        }
+        else if (F.ranInt(1000) > 998)     // random change they will turn around
         {
             s.scale.x *= -1;
-            this.v.x = - s.scale.x * this.NPC_SPEED_X;
+            this.startMoving();
         }
-
-        if (F.ranInt(1000) > 995)    // random change they will stop or start moving
+        else if (F.ranInt(1000) > 995)    // random change they will stop or start moving
         {
             if (this.v.x === 0) {
-                this.v.x = - s.scale.x * this.NPC_SPEED_X;
-                this.v.y = this.NPC_SPEED_Y * F.ranInt(0, 100) / 100;
+                this.startMoving();
             }
             else this.v.y = this.v.x = 0;
         }
@@ -52,5 +59,23 @@ export class NPC extends GameObj {
 
         // perform regular alive GameObj tasks
         super.alive();
+    }
+
+    onClick() {
+        this.s.scale.x *= F.ranInt(100) > 50 ? 1 : -1;   // turn around sometimes
+        this.startMoving();                              // start moving
+        this.v.y = - Math.abs(this.v.y);                 // always walk towards top of page
+        this.v.x *= this.objTemplate.runModifier;                   // run
+        this.runCounter = this.RUN_LENGTH;               // set how long to run
+
+        const frames = PIXI.utils.TextureCache['assets/images/egg.json_image'];         // select frames from textures spritesheet for use in this object
+        console.log('prepare egg', frames);
+        const o = this.game.world.addObject('egg', 'obj', new PIXI.Point(this.x, this.y));
+        console.log('created egg', o);
+    }
+
+    startMoving() {
+        this.v.x = - this.s.scale.x * this.objTemplate.speedX;
+        this.v.y = this.objTemplate.speedY * F.ranInt(0, 100) / 100;
     }
 }
