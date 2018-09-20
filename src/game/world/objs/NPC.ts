@@ -13,8 +13,6 @@ export class NPC extends GameObj {
 
     public RUN_LENGTH = 2 * 60;
 
-    public runCounter = 0;
-
     constructor(
         public game: Game,
         public app: Application,

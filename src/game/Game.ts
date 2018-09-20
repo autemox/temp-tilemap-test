@@ -29,7 +29,7 @@ export class Game {
 
     // world heirarchy
     public world: World;                           // container all sprites and tiles go into
-    public god = 2;
+    public god = 2;                                // controls animation of godrays
 
     // asset list
     public assets: Array<String> = [
@@ -147,6 +147,32 @@ export class Game {
         // check if game is focused (if mouse is on canvas)
         this.mouseFocused = !F.boundary(this.app.renderer.plugins.interaction.mouse.global, this.app.screen);
 
+        // networking
+        this.connection.update();
+    }
+
+    pause(delta) {
+
+        /* do nothing*/
+    }
+
+    play(delta) {
+
+        // loop through game objects and update them
+        for (let i = 0, len = this.world.objs.length; i < len; i++)
+        {
+            this.world.objs[i].update(delta);
+        }
+
+        // animate stage filter
+        this.app.stage.filters = [
+            new PIXI.filters.GodrayFilter(-20, 0.5, this.god, true, 0)
+        ];
+        this.god += .0001;
+
+        // sort sprites, lower on screen to the front
+        this.world.spriteContainer.children.sort((a, b) => a.position.y > b.position.y ? 1 : 0);
+
         // control camera
         this.world.container.scale.set(.7);
         if (this.world.player) {
@@ -168,31 +194,5 @@ export class Game {
                 -camera.y * this.world.container.scale.y + this.app.screen.height / 2
             );
         }
-
-        // networking
-        this.connection.update();
-    }
-
-    pause(delta) {
-
-        /* do nothing*/
-    }
-
-    play(delta) {
-
-        // loop through game objects and update them
-        for (let i = 0, len = this.world.objs.length; i < len; i++)
-        {
-            this.world.objs[i].update(delta);
-        }
-
-        // add filter to entire world
-        this.app.stage.filters = [
-            new PIXI.filters.GodrayFilter(-20, 0.5, this.god, true, 0)
-        ];
-        this.god += .0001;
-
-        // sort sprites, lower on screen to the front
-        this.world.spriteContainer.children.sort((a, b) => a.position.y > b.position.y ? 1 : 0);
     }
 }

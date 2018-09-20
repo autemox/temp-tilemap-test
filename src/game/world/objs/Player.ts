@@ -9,8 +9,6 @@ import { ObjTemplate } from '../../model/ObjTemplate';
 
 export class Player extends Client {
 
-    public PLAYER_SPEED = 5;
-
     public left = F.keyboard(37);
     public up = F.keyboard(38);
     public right = F.keyboard(39);
@@ -34,16 +32,16 @@ export class Player extends Client {
         ];
 
         // watch controls
-        const speed = this.PLAYER_SPEED;
-        this.left.press = () => this.velocityX = -speed;
-        this.left.release = () => this.velocityX = this.right.isUp ? 0 : speed;
-        this.right.press = () => this.velocityX = speed;
-        this.right.release = () => this.velocityX = this.left.isUp ? 0 : speed;
+        const speed = new PIXI.Point(objTemplate.speedX, objTemplate.speedY);
+        this.left.press = () => this.velocityX = -speed.x;
+        this.left.release = () => this.velocityX = this.right.isUp ? 0 : speed.x;
+        this.right.press = () => this.velocityX = speed.x;
+        this.right.release = () => this.velocityX = this.left.isUp ? 0 : -speed.x;
 
-        this.up.press = () => this.velocityY = -speed;
-        this.up.release = () => this.velocityY = this.down.isUp ? 0 : speed;
-        this.down.press = () => this.velocityY = speed;
-        this.down.release = () => this.velocityY = this.up.isUp ? 0 : speed;
+        this.up.press = () => this.velocityY = -speed.y;
+        this.up.release = () => this.velocityY = this.down.isUp ? 0 : speed.y;
+        this.down.press = () => this.velocityY = speed.y;
+        this.down.release = () => this.velocityY = this.up.isUp ? 0 : -speed.y;
     }
 
     public set velocityX(x) {

@@ -24,6 +24,7 @@ export class GameObj {
     set x(x: number) { this.l.x = x; }
     get y(): number { return this.l.y; }
     set y(y: number) { this.l.y = y; }
+    public runCounter = 0;
 
     public label: PIXI.Text;
 
@@ -97,8 +98,6 @@ export class GameObj {
         // update visual position of game object based on location actual
         this.l.x = Math.round(this.l.x);
         this.l.y = Math.round(this.l.y);
-        this.s.position.x = (this.s.position.x * 90 + this.l.x * 10) / 100;
-        this.s.position.y = (this.s.position.y * 90 + this.l.y * 10) / 100;
 
         // update label based on horizontal flipping of sprite
         this.label.scale.x = this.s.scale.x > 0 ? 1 : -1;
@@ -121,7 +120,7 @@ export class GameObj {
             this.game.world.mapCollision(this.x, this.y + this.v.y + (this.v.y > 0 ? this.s.height : -this.s.height) / 2) !== 0 ? this.v.y : 0
         );
 
-        // look for current collsion (bugged)
+        // look for complete collision (check to see if sprite is bugged inside of a collidable)
         if (this.game.world.mapCollision(this.x, this.y)) this.y += 5;
 
         // physics
@@ -129,17 +128,22 @@ export class GameObj {
         if (!this.collision.y) this.y += this.v.y;
 
         // calculate local velocity and move towards location actual
-        const v = new PIXI.Point(0, 0);                                    // note local velocity is different than actual velocity and exists to prevent rubber banding
-        v.x =                                                              // select local velocity based on which direction they need to move to get to location actual
-            this.l.x > this.s.x + this.objTemplate.speedX ? this.objTemplate.speedX :
-            this.l.x < this.s.x - this.objTemplate.speedX ? -this.objTemplate.speedX :
-            this.v.x;
-        v.y =
-            this.l.y > this.s.y + this.objTemplate.speedY ? this.objTemplate.speedY :
-            this.l.y < this.s.y - this.objTemplate.speedY ? -this.objTemplate.speedY :
-            this.v.y;
-        s.x += v.x;                                                      // move towards location actual
-        s.y += v.y;
+        const speed = new PIXI.Point(                                    // adjust for faster movement if runCounter is on
+            (this.runCounter > 0 ? this.objTemplate.runModifier : 1) * this.objTemplate.speedX,
+            (this.runCounter > 0 ? this.objTemplate.runModifier : 1) * this.objTemplate.speedY);
+
+        const v = new PIXI.Point(                                        // note local velocity is different than actual velocity and exists to prevent rubber banding
+            this.x > this.s.x + speed.x ? speed.x :                      // select local velocity based on which direction they need to move to get to location actual
+            this.x < this.s.x - speed.x ? -speed.x :
+            this.v.x,
+            this.y > this.s.y + speed.y ? speed.y :
+            this.y < this.s.y - speed.y ? -speed.y :
+            this.v.y);
+
+        if (!this.collision.x) s.x += v.x;                               // move towards location actual
+        else s.x = (s.x * 90 + this.x * 10) / 100;
+        if (!this.collision.y) s.y += v.y;
+        else s.y = (s.y * 90 + this.y * 10) / 100;
 
         // boundaries
         F.boundary(this, new PIXI.Rectangle(0, 0, this.game.world.tile.width * this.game.world.map.width, this.game.world.tile.height * this.game.world.map.height), true);
@@ -171,13 +175,12 @@ export class GameObj {
     remove() {
 
         // removes game object from world
-        this.game.world.objs.filter((o: any) => {
-            if (o === this) return false;
-            return true;
+        this.game.world.objs = this.game.world.objs.filter((o: any) => {
+            return o === this ? false : true;
         });
 
         // removes sprite from container
-        this.game.world.container.removeChild(this.s);
+        this.game.world.spriteContainer.removeChild(this.s);
     }
 
     onMouseOver() {

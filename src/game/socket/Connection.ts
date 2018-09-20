@@ -143,9 +143,11 @@ export class Connection {
             .subscribe((socket) => {
 
               this.status = 'connected';
-              this.user.id = socket.id;                       // you have been assigned a unique id to be used in user and on your game object
-              this.game.connected(this.user);                 // create world (including player)
-              this.ping();                                    // ping the world so other players know where your game obj is, etc
+              this.user.id = socket.id;                     // you have been assigned a unique id to be used in user and on your game object
+              this.game.connected(this.user);               // create world (including player)
+
+              this.updateUser();                            // make sure this.user is up to date
+              this.sendMessage(Action.JOINED);              // tell server you have joined the game
           });
 
         // "DISCONNECT" EVENT: YOU HAVE BEEN DISCONNECTED

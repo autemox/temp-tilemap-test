@@ -132,7 +132,11 @@ export class World {
     public addObject(templateName: string, type: string, p, id: number, name?: string) {
 
         // find the template for this object
-        const objTemplate: ObjTemplate = this.game.templates.Item(templateName);
+        const objTemplate: ObjTemplate = Object.assign({}, this.game.templates.Item(templateName));
+
+        // speed up players and clients
+        if (type === 'player' || type === 'client') objTemplate.speedX *= 3;
+        if (type === 'player' || type === 'client') objTemplate.speedY *= 6;
 
         // create the game object
         let o: any;
