@@ -9,7 +9,6 @@ import { ObjTemplate } from '../../model/ObjTemplate';
 
 export class Player extends Client {
 
-    public type: String = 'player';                   // npc, player, client, or obj?
     public PLAYER_SPEED = 5;
 
     public left = F.keyboard(37);
@@ -21,11 +20,12 @@ export class Player extends Client {
         public game: Game,
         public app: Application,
         objTemplate: ObjTemplate,
+        type: string,
         location: Point,
         id: number,
         public name: string) {
 
-        super(game, app, objTemplate, location, id, name);
+        super(game, app, objTemplate, type, location, id, name);
 
         // add filter
         this.s.filters = [

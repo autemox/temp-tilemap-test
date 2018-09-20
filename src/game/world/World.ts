@@ -10,14 +10,18 @@ import { ObjTemplate } from '../model/ObjTemplate';
 import { TileSet } from '../model/TileSet';
 import { Layer } from '../model/Layer';
 import { Client } from './objs/Client';
+import { User } from '../model/socket/user';
 declare var PIXI: any; // instead of importing pixi like some tutorials say to do use declare
-
 
 // ABOUT THIS CLASS
 // contains the game world, a map, tilesets, terrian, a container with all game sprites in it, a reference to the player object
+// stage heirarchy: stage (includes UI) -> container (terrian, sprites, etc) -> spriteContainer (just sprites)
+
 export class World {
 
-    public container = new PIXI.Container();                        // contains all game sprites
+    public container = new PIXI.Container();                        // contains all game world incl terrian, sprites
+    public spriteContainer = new PIXI.Container();                  // contains all game world sprites
+
     public objs: Array<GameObj|Player|NPC> = [];                    // Array of World Objects, including Clients, Player, NPCs
     public player: Player;                                          // the current player object
 
@@ -28,7 +32,11 @@ export class World {
     public tile: Rectangle = new PIXI.Rectangle(0, 0, 64, 64);      // width and height of a single tile (in pixels)
     public layers: Array<Layer> = [];                               // a list of terrian layers, their name, data (array of numbers representing the tile), and the pixiTileMap (composed image)
 
-    constructor(public game: Game, public app: Application, mapName: string, playerID: number, playerName: string) {
+    constructor(
+        public game: Game,
+        public app: Application,
+        mapName: string,
+        user: User) {
 
         // iterate loaded spritesheets
         game.templates.Keys().forEach((key) => {
@@ -44,9 +52,11 @@ export class World {
         this.map = new PIXI.Rectangle(0, 0, mapData.width, mapData.height);        // remember map height and width (in tiles)
 
         this.tilesets = mapData.tilesets.map((tileset) => {        // prepare list of tilesets from our json list of tilesets
+
+            console.log('tileset', tileset);
             return {
                 firstgid: tileset.firstgid,
-                source: F.removeExtension(F.removePath(tileset.source)) // fix source string: we just need XXX from ./../XXX-spritesheet.tsx (the way tiled saves the source)
+                source: F.removeExtension(F.removePath(tileset.source ? tileset.source : tileset.image)) // fix source string: we just need XXX from ./../XXX.tsx (the way tiled saves the source)
             };
         });
 
@@ -81,10 +91,10 @@ export class World {
                         if (objData.type === 'player') p.x += F.ranInt(-100, 100);                             // modify position of new players slightly to prevent overlap on spawn
                         if (objData.type === 'player') p.y += F.ranInt(-100, 100);
 
-                        const id = objData.type === 'player' ? playerID : F.generateID();                     // select an id for the object
-                        this.addObject(objData.name, objData.type.toLowerCase(), p, id, objData.type === 'player' ? playerName : undefined);  // create the object
+                        const id = objData.type === 'player' ? user.id : F.generateID();                     // select an id for the object
+                        this.addObject(objData.name, objData.type.toLowerCase(), p, id, objData.type === 'player' ? user.name : undefined);  // create the object
                     }
-                    this.app.stage.addChild(this.container);                             // add sprite container to the stage
+                    this.container.addChild(this.spriteContainer);                             // add sprite container to the stage
                     break;
                 }
                 default: {
@@ -103,11 +113,13 @@ export class World {
                             }
                         }
                     }
-                    app.stage.addChild(this.layers[m].pixiTileMap);
+                    this.container.addChild(this.layers[m].pixiTileMap);
                     break;
                 }
             }
         }
+        this.app.stage.addChild(this.container);                             // add container to the stage
+        this.container.on('mouseover', () => console.log('test'));           // Pointers normalize touch and mouse
 
         // set minimize stage size using an empty sprite
         const texture: Texture = PIXI.loader.resources['assets/images/chicken.json'].textures['0.png'];
@@ -124,21 +136,25 @@ export class World {
 
         // create the game object
         let o: any;
-        if (type === 'npc') o = new NPC(this.game, this.app, objTemplate, p, id, name);
-        else if (type === 'player') o = this.player = new Player(this.game, this.app, objTemplate, p, id, name);
-        else if (type === 'client') o = new Client(this.game, this.app, objTemplate, p, id, name);
-        else  o = new GameObj(this.game, this.app, objTemplate, p, id, name);
+        if (type === 'npc') o = new NPC(this.game, this.app, objTemplate, type, p, id, name);
+        else if (type === 'player') o = this.player = new Player(this.game, this.app, objTemplate, type, p, id, name);
+        else if (type === 'client') o = new Client(this.game, this.app, objTemplate, type, p, id, name);
+        else  o = new GameObj(this.game, this.app, objTemplate, type, p, id, name);
 
         // add game object to obj list and sprite to sprite container
         this.objs.push(o);
-        this.container.addChild(o.s);
+        this.spriteContainer.addChild(o.s);
 
         // allow chickens to be clicked
-        if (o.type === 'npc' && name === 'chicken') {
-            o.s.interactive = true;                                          // Touch, pointer and mouse events will be emitted if true
-            o.s.buttonMode = true;                                           // creates hand when hovering over sprite
-            o.s.on('pointerdown', o.onClick.bind(o));                          // Pointers normalize touch and mouse
+        o.s.interactive = true;                                           // Touch, pointer and mouse events will be emitted if true
+        if (o.type === 'npc' && templateName === 'chicken') {
+            o.s.buttonMode = true;                                        // creates hand when hovering over sprite
+            o.s.on('pointerdown', o.onClick.bind(o));                     // Pointers normalize touch and mouse
         }
+
+        // hover objects to see label
+        o.s.on('mouseover', o.onMouseOver.bind(o));                        // Pointers normalize touch and mouse
+        o.s.on('mouseout', o.onMouseOut.bind(o));                          // Pointers normalize touch and mouse
 
         return o;
     }

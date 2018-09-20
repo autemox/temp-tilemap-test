@@ -158,11 +158,13 @@ export module F {
 
     export function removePath(str: string): string {
         // removes path from string ie ../tiled maps/terrian-01-spritesheet.tsx to terrian-01-spritesheet.tsx
+        console.log('remove path', str);
         const arr: Array<string> = str.split('/');
         return arr[arr.length - 1];
     }
 
     export function removeExtension(str: string): string {
+        console.log('remove ext', str);
         // removes extension from string ie terrian-01-spritesheet.tsx to terrian-01-spritesheet
         const arr: Array<string> = str.split('.');
         return arr[arr.length - 2];

@@ -11,6 +11,7 @@ import { ObjTemplate } from './model/ObjTemplate';
 import { PixiUtils } from './utils/PixiUtils';
 import { Dictionary } from './utils/Dictionary';
 import { Connection } from './socket/Connection';
+import { User } from './model/socket/user';
 declare var PIXI: any; // instead of importing pixi like some tutorials say to do use declare
 
 export class Game {
@@ -116,11 +117,11 @@ export class Game {
         this.connection = new Connection(this);
    }
 
-   connected(playerID: number, playerName: string) {
+   connected(user: User) {
 
         // create the world
         if (this.world) this.world.remove();                           // if not our first time connecting, remove the old world
-        this.world = new World(this, this.app, 'map-001', playerID, playerName);   // create a new world
+        this.world = new World(this, this.app, 'map-001', user);   // create a new world
 
         if (!this.state) {
                                                      // is this our first time connecting?
@@ -147,7 +148,7 @@ export class Game {
         this.mouseFocused = !F.boundary(this.app.renderer.plugins.interaction.mouse.global, this.app.screen);
 
         // control camera
-        this.app.stage.scale.set(.6);
+        this.world.container.scale.set(.7);
         if (this.world.player) {
             // place camera on player
             const camera = new PIXI.Point(this.world.player.x, this.world.player.y);
@@ -155,16 +156,16 @@ export class Game {
             F.boundary(
                 camera,
                 new PIXI.Rectangle(
-                    this.app.screen.width / (2 * this.app.stage.scale.x),
-                    this.app.screen.height / (2 * this.app.stage.scale.y),
-                    this.world.map.width * this.world.tile.width - this.app.screen.width / this.app.stage.scale.x,
-                    this.world.map.height * this.world.tile.height - this.app.screen.height / this.app.stage.scale.y
+                    this.app.screen.width / (2 * this.world.container.scale.x),
+                    this.app.screen.height / (2 * this.world.container.scale.y),
+                    this.world.map.width * this.world.tile.width - this.app.screen.width / this.world.container.scale.x,
+                    this.world.map.height * this.world.tile.height - this.app.screen.height / this.world.container.scale.y
                 )
             );
             // move stage to center camera
-            this.app.stage.position.set(
-                -camera.x * this.app.stage.scale.x + this.app.screen.width / 2,
-                -camera.y * this.app.stage.scale.x + this.app.screen.height / 2
+            this.world.container.position.set(
+                -camera.x * this.world.container.scale.x + this.app.screen.width / 2,
+                -camera.y * this.world.container.scale.y + this.app.screen.height / 2
             );
         }
 
@@ -192,7 +193,6 @@ export class Game {
         this.god += .0001;
 
         // sort sprites, lower on screen to the front
-        this.world.container.children.sort((a, b) => a.position.y > b.position.y ? 1 : 0);
-        this.world.container.children.sort((a, b) => a.position.y > b.position.y ? 1 : 0);
+        this.world.spriteContainer.children.sort((a, b) => a.position.y > b.position.y ? 1 : 0);
     }
 }

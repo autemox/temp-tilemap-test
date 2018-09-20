@@ -17,10 +17,11 @@ export class Client extends GameObj {
         public game: Game,
         public app: Application,
         objTemplate: ObjTemplate,
+        type: string,
         location: Point,
         id: number,
         public name: string) {
 
-        super(game, app, objTemplate, location, id, name);
+        super(game, app, objTemplate, type, location, id, name);
     }
 }

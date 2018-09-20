@@ -52,7 +52,6 @@ export class UI {
     update() {
 
         const cords = this.game.app.renderer.plugins.interaction.mouse.global;
-        this.message.text = 'Mouse Cords: ' + cords.x + ' / ' + cords.y + ' / ';
-
+        this.message.text = this.game.connection.status;
     }
 }

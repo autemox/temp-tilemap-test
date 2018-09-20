@@ -9,7 +9,6 @@ export class GameObj {
     // game
     public health: Number = 100;                   // health
     public state: Function = this.alive;           // state (ie alive, dead, dying)
-    public type: String = 'obj';                   // npc, player, client, or obj?
 
     // visual
     public s: PIXI.extras.AnimatedSprite;          // the PIXI sprite of this game obj
@@ -19,9 +18,9 @@ export class GameObj {
 
     // physics
     public collision: PIXI.Point = new PIXI.Point(0, 0);   // -1 or 1 for x or y showing collision
-    public v: PIXI.Point = new PIXI.Point(0, 0);   // velocity
-    public l: PIXI.Point = new PIXI.Point(0, 0);   // location (actual, not display)
-    get x(): number { return this.l.x; }           // x any y variables are based on location actual
+    public v: PIXI.Point = new PIXI.Point(0, 0);      // velocity
+    public l: PIXI.Point = new PIXI.Point(0, 0);      // location (actual, not display)
+    get x(): number { return this.l.x; }              // x any y variables are based on location actual
     set x(x: number) { this.l.x = x; }
     get y(): number { return this.l.y; }
     set y(y: number) { this.l.y = y; }
@@ -32,6 +31,7 @@ export class GameObj {
         public game: Game,
         public app: Application,
         public objTemplate: ObjTemplate,
+        public type: string,
         location: Point,
         public id: number,
         public name: string) {
@@ -49,13 +49,23 @@ export class GameObj {
 
         // label above the object
                 this.label = new PIXI.Text(
-                    this.name,
+                    (type === 'npc' || type === 'obj' ? objTemplate.name : this.name),
                     new PIXI.TextStyle({
-                        fontSize: 40,
-                        fill: 'white'
+                        fontSize: 30,
+                        fill: type === 'npc' ? '#D6EBF2' : 'white',
+                        fontFamily: 'Calibri',
+                        fontWeight: '400',
+                        dropShadow: true,
+                        dropShadowColor: '#000000',
+                        dropShadowBlur: 5,
+                        dropShadowAngle: Math.PI / 6,
+                        dropShadowDistance: 1
                     })
                 );
-        this.label.position.set(-this.label.width / 2, - this.s.height * 2);
+        this.label.resolution = 2;
+        this.label.position.set(0, - this.s.height * 1.5);
+        this.label.anchor.set(0.5);
+        this.label.visible = false;
         this.s.addChild(this.label);
     }
 
@@ -89,6 +99,9 @@ export class GameObj {
         this.l.y = Math.round(this.l.y);
         this.s.position.x = (this.s.position.x * 90 + this.l.x * 10) / 100;
         this.s.position.y = (this.s.position.y * 90 + this.l.y * 10) / 100;
+
+        // update label based on horizontal flipping of sprite
+        this.label.scale.x = this.s.scale.x > 0 ? 1 : -1;
     }
 
     dead() {
@@ -114,23 +127,34 @@ export class GameObj {
         // physics
         if (!this.collision.x) this.x += this.v.x;                       // move actual
         if (!this.collision.y) this.y += this.v.y;
-        if (!this.collision.x) this.s.position.x += this.v.x;            // move visual
-        if (!this.collision.y) this.s.position.y += this.v.y;
+
+        // calculate local velocity and move towards location actual
+        const v = new PIXI.Point(0, 0);                                    // note local velocity is different than actual velocity and exists to prevent rubber banding
+        v.x =                                                              // select local velocity based on which direction they need to move to get to location actual
+            this.l.x > this.s.x + this.objTemplate.speedX ? this.objTemplate.speedX :
+            this.l.x < this.s.x - this.objTemplate.speedX ? -this.objTemplate.speedX :
+            this.v.x;
+        v.y =
+            this.l.y > this.s.y + this.objTemplate.speedY ? this.objTemplate.speedY :
+            this.l.y < this.s.y - this.objTemplate.speedY ? -this.objTemplate.speedY :
+            this.v.y;
+        s.x += v.x;                                                      // move towards location actual
+        s.y += v.y;
 
         // boundaries
         F.boundary(this, new PIXI.Rectangle(0, 0, this.game.world.tile.width * this.game.world.map.width, this.game.world.tile.height * this.game.world.map.height), true);
 
-        // visual
-        if (this.v.x !== 0 || this.v.y !== 0) this.animate('walk');
+        // visual based on local velocity (not actual velocity)
+        if (v.x !== 0 || v.y !== 0) this.animate('walk');
         else if (this.animation !== 'idle') this.animate('stand');
-        if (this.v.x !== 0) s.scale.x = this.v.x < 0 ? this.objTemplate.scale : -this.objTemplate.scale;
+        if (v.x !== 0) s.scale.x = v.x < 0 ? this.objTemplate.scale : -this.objTemplate.scale;
 
         // objects that have rotation should quiver to make them more noticable
         this.quiver += this.s.rotation / 15;
         this.s.rotation -= this.quiver / 10;
 
         // countdown to idle animation
-        if (this.v.x !== 0 || this.v.y !== 0) this.idleCount = 0;
+        if (v.x !== 0 || v.y !== 0) this.idleCount = 0;
         else this.idleCount++;
 
         if (this.idleCount === 2 * 60)
@@ -154,5 +178,20 @@ export class GameObj {
 
         // removes sprite from container
         this.game.world.container.removeChild(this.s);
+    }
+
+    onMouseOver() {
+
+        this.label.visible = true;
+        console.log('over!', this);
+    }
+
+    onMouseOut() {
+
+        this.label.visible = false;
+    }
+
+    onClick() {
+
     }
 }

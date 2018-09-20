@@ -11,7 +11,6 @@ import { ObjTemplate } from '../../model/ObjTemplate';
 
 export class NPC extends GameObj {
 
-    public type: String = 'npc';                   // npc, player, client, or obj?
     public RUN_LENGTH = 2 * 60;
 
     public runCounter = 0;
@@ -20,11 +19,12 @@ export class NPC extends GameObj {
         public game: Game,
         public app: Application,
         objTemplate: ObjTemplate,
+        type: string,
         location: Point,
         id: number,
         public name: string) {
 
-        super(game, app, objTemplate, location, id, name);
+        super(game, app, objTemplate, type, location, id, name);
 
         // add filter
         this.s.filters = [
