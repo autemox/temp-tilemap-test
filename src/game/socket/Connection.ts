@@ -39,7 +39,7 @@ export class Connection {
 
         this.user = {                                    // create a random user for now
             id: F.generateID(),
-            template: 'human',
+            template: 'human-0' + F.ranInt(1, 2),       // ?? randomize spritesheet used
             name: ['Omar', 'Dwayne', 'Eloy', 'Floyd', 'Jan', 'Vonda', 'Jeffrey', 'Harris', 'Eugene', 'Raleigh', 'Heriberto', 'Janet', 'Vince', 'Dirk', 'Fernando', 'Shelton', 'Quincy', 'Abdul', 'Marlon', 'Fermin'][F.ranInt(0, 19)]
         };
 
@@ -50,7 +50,10 @@ export class Connection {
     public update(needPing?: Boolean) {
 
         // ping server with your location regularly
-        if (needPing) this.needPing = true;             // getting message from player that we need to update because hes moving around a lot
+        if (needPing) {
+            this.needPing = true;             // getting message from player that we need to update because hes moving around a lot
+            console.log('request for ping');
+        }
         this.lastUpdate++;                              // every 1 second send notification with current location to other players.  sometimes called more frequently
         if (this.lastUpdate > this.updateFrequency || this.lastUpdate > this.maxUpdateFrequency && this.needPing) this.ping();
     }
@@ -61,6 +64,7 @@ export class Connection {
         // check if player exists and if so, update network
         if (this.game.world.player) {
 
+            this.needPing = false;
             this.lastUpdate = 0;
             this.updateUser();                        // make sure this.user is up to date
             this.sendMessage(Action.PING);       // send packet to server with ping (updated location, etc)
@@ -72,15 +76,16 @@ export class Connection {
 
         this.user.l = this.game.world.player.l;           // update our info on where player located actual
         this.user.v = this.game.world.player.v;
-        this.user.scaleX = this.game.world.player.s.scale.x;
+        this.user.facing = this.game.world.player.facing;
     }
 
     // User.var is applied to game object
     private updateClient(client: Client|GameObj|Player|NPC, user: User) {
 
+        console.log('ping', client, user);
         client.l = user.l;
         client.v = user.v;
-        client.s.scale.x = user.scaleX;
+        client.face(user.facing);
     }
 
     // a packet was received, do as action requires
@@ -169,7 +174,7 @@ export class Connection {
             action: action,
             content: content,
             timestamp: new Date().getTime()
-        }
+        };
 
         this.socketService.send(message);       // send the message
         this.lastUpdate = 0;                    // reset ping countdown

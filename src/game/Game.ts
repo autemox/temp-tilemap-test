@@ -38,6 +38,7 @@ export class Game {
         'assets/images/chick.json',
         'assets/images/egg.json',
         'assets/images/human-01.json',
+        'assets/images/human-02.json',
         'assets/images/benjiro-01.json',
         'assets/map-002.json'
     ];
@@ -51,7 +52,7 @@ export class Game {
     public templates = new Dictionary<ObjTemplate>();
     private objTemplates = [   // do not reference direct.  reference Dictionary templates instead
         {
-            name: 'human',
+            name: 'human-01',
             sheet: 'human-01',
             animationSpeed: 0.2,
             animations: {
@@ -64,9 +65,30 @@ export class Game {
                 idle: [61],
                 death: [60]
             },
-            speedX: 2,
-            speedY: 1,
+            speedX: 1.2,
+            speedY: .45,
             runModifier: 2,
+            facingModifier: 2,
+            textures: undefined
+        },
+        {
+            name: 'human-02',
+            sheet: 'human-02',
+            animationSpeed: 0.2,
+            animations: {
+                stand: [61],
+                stand_up: [75],
+                stand_down: [45],
+                walk: [68, 67, 66, 67, 68, 65, 64, 63, 62, 63, 64, 65],
+                walk_down: [46, 47, 48, 53, 46, 45, 49, 50, 51, 52, 49, 45],
+                walk_up: [76, 77, 78, 79, 75, 80, 81, 82, 75],
+                idle: [61],
+                death: [60]
+            },
+            speedX: 1.2,
+            speedY: .45,
+            runModifier: 2,
+            facingModifier: 2,
             textures: undefined
         },
         {

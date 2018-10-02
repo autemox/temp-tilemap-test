@@ -9,7 +9,8 @@ export interface ObjTemplate {
     animations: AnimationTemplate;
     speedX: number;
     speedY: number;
-    runModifier: number;
+    runModifier: number;                  // the modifier for when object is running
+    facingModifier: number;               // the modifier (faster) when object is facing direction of movement
     textures: Array<Texture>;
     scale?: number;
 }

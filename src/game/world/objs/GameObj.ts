@@ -3,8 +3,16 @@ import { F } from '../../utils/F';
 import { Game } from '../../Game';
 import { ObjTemplate } from '../../model/ObjTemplate';
 import { PixiUtils } from '../../utils/PixiUtils';
+import { Direction } from '../../model/basic/Direction';
+import { getPreviousOrParentNode } from '../../../../node_modules/@angular/core/src/render3/instructions';
+import { renderComponent } from '../../../../node_modules/@angular/core/src/render3';
 
 export class GameObj {
+    // ABOUT THIS CLASS
+    // this is a standard game object, can be extended to npc or client, or it can be called directly
+    // controls physics of the game object
+    // controls visual of the game object, including setting animation & facing (direction)
+    // controls
 
     // game
     public health: Number = 100;                   // health
@@ -15,7 +23,8 @@ export class GameObj {
     public quiver = 0;                             // set this to non-zero (or set rotation to non-zero) to make the object 'quiver' and make it more noticable
     public idleCount = 0;                          // when reaches 2 seconds, idle animation will play
     public animation = 'stand';                    // what animation is active? stand walk idle dead
-    public facing = 'side';                        // what direction is character facing?
+    public _facing: Direction = Direction.LEFT;    // what direction is character facing?
+    get facing(): Direction { return this._facing; }
 
     // physics
     public collision: PIXI.Point = new PIXI.Point(0, 0);   // -1 or 1 for x or y showing collision
@@ -25,7 +34,9 @@ export class GameObj {
     set x(x: number) { this.l.x = x; }
     get y(): number { return this.l.y; }
     set y(y: number) { this.l.y = y; }
-    public runCounter = 0;
+
+    // running
+    public runCounter = 0;                            // when runCounter > 0 the speed of the object moves faster and counter counts down to 0
 
     public label: PIXI.Text;
 
@@ -71,23 +82,31 @@ export class GameObj {
         this.s.addChild(this.label);
     }
 
-    animate(animation: string, facing?: string) {
+    face(facing: Direction) {
+        this.animate(this.animation, facing);
+    }
+
+
+    animate(animation: string, facing?: Direction) {
+        if (facing === undefined) facing = this.facing;                         // default to current facing if not specified by call
         if (this.animation === animation && this.facing === facing) return;
 
         try {
             // load the frames for animation in and start playing... ie: stand_up walk_down idle death
-            this.s.textures = this.getAnimationTextures(animation + '_' + facing);
+            if (facing === Direction.LEFT || facing === Direction.RIGHT) this.s.textures = this.getAnimationTextures(animation);
+            else this.s.textures = this.getAnimationTextures(animation + (facing === Direction.DOWN ? '_down' : '_up'));
         }
         catch {
             // failure to find animations facing direction specified
-            this.s.textures = this.getAnimationTextures(animation);          // try without facing that direction
-            facing = 'side';
-        }
+            if (animation === 'idle') return;                                        // give up for idle animations
 
+            this.s.textures = this.getAnimationTextures(animation);                  // try without facing that direction
+            facing = this.s.scale.x > 0 ? Direction.RIGHT : Direction.LEFT;
+        }
         this.s.gotoAndPlay(0);
         this.s.loop = true;
-        this.animation = animation;
-        this.facing = facing;
+        this.animation = animation;                              // the only place animation is updated
+        this._facing = facing;                                   // the only place _facing is updated (trying to update it with facing sends you to this function, animate())
     }
 
     getAnimationTextures(animation): Array<Texture> {
@@ -121,16 +140,31 @@ export class GameObj {
         s.rotation = 90;
     }
 
+    getSpeed(): PIXI.Point {
+
+        // this is called every frame in case of changes to facing or running.  called from Player.ts and GameObj.ts
+        return new PIXI.Point(
+            (this.runCounter > 0 ? this.objTemplate.runModifier : 1) *                    // adjust for faster movement if runCounter is on
+            (this.facing === Direction.LEFT && this.v.x < 0 ? this.objTemplate.facingModifier : 1) *      // adjust for faster movement moving left and facing left
+            (this.facing === Direction.RIGHT && this.v.x > 0 ? this.objTemplate.facingModifier : 1) *      // adjust for faster movement moving right and facing right
+            this.objTemplate.speedX
+        ,
+            (this.runCounter > 0 ? this.objTemplate.runModifier : 1) *
+            (this.facing === Direction.DOWN && this.v.y > 0 ? this.objTemplate.facingModifier : 1) *
+            (this.facing === Direction.UP && this.v.y < 0 ? this.objTemplate.facingModifier : 1) *
+            this.objTemplate.speedY);
+    }
+
     alive() {
         const s = this.s;
 
         // look for future collision
         this.collision = new PIXI.Point(
-            this.game.world.mapCollision(this.x + this.v.x + (this.v.x > 0 ? this.s.width : -this.s.width) / 2, this.y) !== 0 ? this.v.x : 0,
-            this.game.world.mapCollision(this.x, this.y + this.v.y + (this.v.y > 0 ? this.s.height : -this.s.height) / 2) !== 0 ? this.v.y : 0
+            this.game.world.mapCollision(this.x + this.v.x + (this.v.x > 0 ? s.width : -s.width) / 2, this.y) !== 0 ? this.v.x : 0,
+            this.game.world.mapCollision(this.x, this.y + this.v.y + (this.v.y > 0 ? s.height : -s.height) / 2) !== 0 ? this.v.y : 0
         );
 
-        // look for complete collision (check to see if sprite is bugged inside of a collidable)
+        // look for complete collision (check to see if sprite is BUGGED inside of a collidable)
         if (this.game.world.mapCollision(this.x, this.y)) this.y += 5;
 
         // physics
@@ -138,16 +172,13 @@ export class GameObj {
         if (!this.collision.y) this.y += this.v.y;
 
         // calculate local velocity and move towards location actual
-        const speed = new PIXI.Point(                                    // adjust for faster movement if runCounter is on
-            (this.runCounter > 0 ? this.objTemplate.runModifier : 1) * this.objTemplate.speedX,
-            (this.runCounter > 0 ? this.objTemplate.runModifier : 1) * this.objTemplate.speedY);
-
+        const speed = this.getSpeed();                                   // gets the game obj maximum speed according to base speed, the direction they are facing, and whether they are running
         const v = new PIXI.Point(                                        // note local velocity is different than actual velocity and exists to prevent rubber banding
-            this.x > this.s.x + speed.x ? speed.x :                      // select local velocity based on which direction they need to move to get to location actual
-            this.x < this.s.x - speed.x ? -speed.x :
+            this.x > s.x + speed.x ? speed.x :                           // select local velocity based on which direction they need to move to get to location actual
+            this.x < s.x - speed.x ? -speed.x :
             this.v.x,
-            this.y > this.s.y + speed.y ? speed.y :
-            this.y < this.s.y - speed.y ? -speed.y :
+            this.y > s.y + speed.y ? speed.y :
+            this.y < s.y - speed.y ? -speed.y :
             this.v.y);
 
         if (!this.collision.x) s.x += v.x;                               // move towards location actual
@@ -159,30 +190,40 @@ export class GameObj {
         F.boundary(this, new PIXI.Rectangle(0, 0, this.game.world.tile.width * this.game.world.map.width, this.game.world.tile.height * this.game.world.map.height), true);
 
         // change facing direction
-        if (v.x === 0 && v.y < 0 || v.y < 0 && this.facing === 'down') this.animate(this.animation, 'up');
-        if (v.x === 0 && v.y > 0 || v.y > 0 && this.facing === 'up') this.animate(this.animation, 'down');
-        if (v.x !== 0 && v.y === 0) this.animate(this.animation, 'side');
+        if (this.id === this.game.world.player.id || F.distanceBetween(this.l, s.position) > 10) {   // only if far from location actual or this is actual player, that way other clients dont spaz out looking left and right repeatedly
 
-        // visual based on local velocity (not actual velocity)
-        if (v.x !== 0 || v.y !== 0) this.animate('walk', this.facing);
-        else if (this.animation !== 'idle') this.animate('stand', this.facing);
+            if (v.x === 0 && v.y < 0 || v.y < 0 && this.facing === Direction.DOWN) this.animate(this.animation,
+                Direction.UP);
+            else if (v.x === 0 && v.y > 0 || v.y > 0 && this.facing === Direction.UP) this.animate(this.animation,
+                Direction.DOWN);
+            else if (v.x !== 0 && v.y === 0) this.animate(this.animation,
+                this.v.x > 0 ? Direction.RIGHT :                                                     // checks for left and right movement and returns which direction they are facing.  if not moving left or right, returns current direction
+                this.v.x < 0 ? Direction.LEFT :
+                this.facing);
+        }
 
-        if (this.facing !== 'side') s.scale.x = this.objTemplate.scale;                                  // when facing up or down, no reason to flip image
-        else if (v.x !== 0) s.scale.x = v.x < 0 ? this.objTemplate.scale : -this.objTemplate.scale;      // flip image if moving left or right
+        // change animation
+        if (v.x !== 0 || v.y !== 0) this.animate('walk');                                                    // visual based on local velocity (not actual velocity), this makes it prettier
+        else if (this.animation !== 'idle' && this.animation !== 'stand') this.animate('stand');
+
+        // flip horizontally (scale.x) for facing right
+        if (this.facing === Direction.RIGHT) s.scale.x = -this.objTemplate.scale;                // flip image only if facing right
+        else s.scale.x = this.objTemplate.scale;                                                 // all other directions we do not flip image
 
         // objects that have rotation should quiver to make them more noticable
-        this.quiver += this.s.rotation / 15;
-        this.s.rotation -= this.quiver / 10;
+        this.quiver += s.rotation / 15;
+        s.rotation -= this.quiver / 10;
 
         // countdown to idle animation
         if (v.x !== 0 || v.y !== 0) this.idleCount = 0;
         else this.idleCount++;
 
+        // execute idle animation
         if (this.idleCount === 2 * 60)
         {
             this.animate('idle');
-            this.s.loop = false;
-            this.s.onComplete = function () {
+            s.loop = false;
+            s.onComplete = function () {                                                        // after idle animation is complete, go back to standing
                 this.animate('stand');
                 this.idleCount = -2 * 60;
             }.bind(this);

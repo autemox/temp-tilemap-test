@@ -1,3 +1,5 @@
+import { Direction } from '../basic/Direction';
+
 export interface User {
 
     // ABOUT THIS INTERFACE
@@ -12,6 +14,6 @@ export interface User {
     template?: string;     // the object template in string form ie 'human', 'chicken', 'chick'
     l?: PIXI.Point;        // location actual to be shared with other clients
     v?: PIXI.Point;        // velocity to be shared with other clients
-    scaleX?: number;       // what direction are they facing?
+    facing?: Direction;    // what direction are they facing?
     name?: string;
 }

@@ -116,6 +116,11 @@ export module F {
         return new PIXI.Point(Math.floor(point.x / tileSize.width), Math.floor(point.y / tileSize.height));
     }
 
+    // GETS DISTANCE BETWEEN TWO POINTS
+    export function distanceBetween(p1: any, p2: any) {
+        return Math.sqrt( Math.pow((p1.x - p2.x), 2) + Math.pow((p1.y - p2.y), 2) );
+    }
+
     export function randomPastelRgb() {
 
         const h = 360 * Math.random(),

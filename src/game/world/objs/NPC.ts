@@ -8,6 +8,7 @@ import {ColorReplaceFilter} from '@pixi/filter-color-replace';
 import { Game } from '../../Game';
 import { PixiUtils } from '../../utils/PixiUtils';
 import { ObjTemplate } from '../../model/ObjTemplate';
+import { Direction } from '../../model/basic/Direction';
 
 export class NPC extends GameObj {
 
@@ -76,5 +77,6 @@ export class NPC extends GameObj {
     startMoving() {
         this.v.x = - this.s.scale.x * this.objTemplate.speedX;
         this.v.y = this.objTemplate.speedY * F.ranInt(0, 100) / 100;
+        this.face(this.v.x < 0 ? Direction.LEFT : this.v.x > 0 ? Direction.RIGHT : this.facing);    // face the direction of movement
     }
 }

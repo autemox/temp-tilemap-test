@@ -97,8 +97,11 @@ export class World {
                         // tslint:disable-next-line:no-inferrable-types
                         const p = new PIXI.Point(objData.x, objData.y);                                        // select position the object starts at
 
-                        if (objData.type === 'player') p.x += F.ranInt(-100, 100);                             // modify position of new players slightly to prevent overlap on spawn
-                        if (objData.type === 'player') p.y += F.ranInt(-100, 100);
+                        if (objData.type === 'player') {
+                            p.x += F.ranInt(-100, 100);                                                        // modify position of new players slightly to prevent overlap on spawn
+                            p.y += F.ranInt(-100, 100);
+                            objData.name = user.template;                                                      // objData.name is passed from user which is choosen in Connection.ts
+                        }
 
                         const id = objData.type === 'player' ? user.id : F.generateID();                     // select an id for the object
                         this.addObject(objData.name, objData.type.toLowerCase(), p, id, objData.type === 'player' ? user.name : undefined);  // create the object
@@ -115,17 +118,21 @@ export class World {
 
                         for (let j = 0; j < mapData.width; j++, c++) {
 
-                            if (typeof(layer.data) === 'undefined') debugger;
+                            if (typeof(layer.data) === 'undefined') {
+                                // tslint:disable-next-line:no-debugger
+                                debugger;
+                            }
                             if (layer.data[c] !== 0 && layer.data[c] !== undefined)
                             {
                                 const sheet: TileSet = this.getTileSet(this.tilesets, layer.data[c]);
                                 try {
                                     const text: Texture = PixiUtils.getFrame(PIXI.loader.resources, sheet.source, layer.data[c] - sheet.firstgid);
+                                    layer.pixiTileMap.addFrame(text, j * this.tile.width, i * this.tile.height);
                                 }
                                 catch {
+                                    // tslint:disable-next-line:no-debugger
                                     debugger;
                                 }
-                                layer.pixiTileMap.addFrame(text, j * this.tile.width, i * this.tile.height);
                             }
                         }
                     }
