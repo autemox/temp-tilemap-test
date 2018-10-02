@@ -42,9 +42,17 @@ export class World {
         game.templates.Keys().forEach((key) => {
 
             const o: ObjTemplate = game.templates.Item(key);
-            const file = `assets/images/${o.name}.json`;                           // the location of the objects sprite png
-            o.textures = PIXI.loader.resources[file].textures;                  // load all objects textures into its objectTemplate so that object can access them
-            console.log(`added ${o.name} to textures.`);
+            const file = `assets/images/${o.sheet ? o.sheet : o.name}.json`;                           // the location of the objects sprite png
+            console.log(`[World.ts] constructor() iterate loaded spreadsheets: ${file}`);
+            if (PIXI.loader.resources.hasOwnProperty(file)) {
+
+                o.textures = PIXI.loader.resources[file].textures;                  // load all objects textures into its objectTemplate so that object can access them
+            }
+            else {
+
+                console.log(`failed to add to textures.`);
+                debugger;
+            }
         });
 
         const mapData: any = PIXI.loader.resources[`assets/${mapName}.json`].data; // get map data from map json
@@ -65,7 +73,7 @@ export class World {
         {
             // create terrian layers
             const layer: Layer = {                                                    // new layer
-                name: mapData.layers[m].name,
+                name: mapData.layers[m].name.split(' ')[0],                           // layer name should have no spaces, if it does, only keep first section (ie Tiled default layer name is Object Layer 1, etc...)
                 data: mapData.layers[m].data,
                 pixiTileMap: new PIXI.tilemap.CompositeRectTileLayer()
             };
@@ -79,6 +87,7 @@ export class World {
                     layer.pixiTileMap.visible = false;                                    // hide layers labeled collision
                     break;
                 }
+                case 'Object':
                 case 'objects': {
 
                     // process object layer
@@ -97,6 +106,7 @@ export class World {
                     this.container.addChild(this.spriteContainer);                             // add sprite container to the stage
                     break;
                 }
+                case 'Tile':
                 default: {
 
                     // process visible layer
@@ -105,10 +115,16 @@ export class World {
 
                         for (let j = 0; j < mapData.width; j++, c++) {
 
+                            if (typeof(layer.data) === 'undefined') debugger;
                             if (layer.data[c] !== 0 && layer.data[c] !== undefined)
                             {
                                 const sheet: TileSet = this.getTileSet(this.tilesets, layer.data[c]);
-                                const text: Texture = PixiUtils.getFrame(PIXI.loader.resources, sheet.source, layer.data[c] - sheet.firstgid);
+                                try {
+                                    const text: Texture = PixiUtils.getFrame(PIXI.loader.resources, sheet.source, layer.data[c] - sheet.firstgid);
+                                }
+                                catch {
+                                    debugger;
+                                }
                                 layer.pixiTileMap.addFrame(text, j * this.tile.width, i * this.tile.height);
                             }
                         }
@@ -163,15 +179,16 @@ export class World {
         return o;
     }
 
-    public getTileSet(tilesets: Array<TileSet>, mapTile: number): TileSet {
-        // iterate through sheets until we find the correct source of the tile
+    public getTileSet(tilesets: Array<TileSet>, mapTile: number): TileSet { // iterate through sheets until we find the correct source of the tile
+
+        // what is mapTile?  It is a number from a map file that represents a tile, but we dont know which sprite sheet the tile is on so we must go through all sprite sheets loaded from that map file and check which tiles those sheets are responsible for
         let sheet: TileSet;
         for (let i = 0; i < tilesets.length; i ++ ) {
             const tileset: TileSet = tilesets[i];
-            if (mapTile > tileset.firstgid) sheet = tileset;
-            else return sheet;
+            if (mapTile >= tileset.firstgid) sheet = tileset;   // check firstgid of this tileset, have we passed the mapTile we are looking for yet?  no, so remember this sheet
+            else return sheet;                                  // ok we have passed tile we are looking for, return the last sheet saved, it is the correct sheet
         }
-        return sheet;
+        return sheet;                                           // got to the end without passing the mapTile we are looking for...  return the last sheet
     }
 
     public mapCollision(x, y): number {                   // put in x, y in pixels, returns 0 if no collision with collision layer, or a single # representing the texture collided with

@@ -25,12 +25,6 @@ export class Player extends Client {
 
         super(game, app, objTemplate, type, location, id, name);
 
-        // add filter
-        this.s.filters = [
-            new PIXI.filters.BevelFilter(),
-            new PIXI.filters.GlowFilter(10, .3, .25, 0xFFFFFF, 1)
-        ];
-
         // watch controls
         const speed = new PIXI.Point(objTemplate.speedX, objTemplate.speedY);
         this.left.press = () => this.velocityX = -speed.x;

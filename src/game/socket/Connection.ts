@@ -39,6 +39,7 @@ export class Connection {
 
         this.user = {                                    // create a random user for now
             id: F.generateID(),
+            template: 'human',
             name: ['Omar', 'Dwayne', 'Eloy', 'Floyd', 'Jan', 'Vonda', 'Jeffrey', 'Harris', 'Eugene', 'Raleigh', 'Heriberto', 'Janet', 'Vince', 'Dirk', 'Fernando', 'Shelton', 'Quincy', 'Abdul', 'Marlon', 'Fermin'][F.ranInt(0, 19)]
         };
 
@@ -93,7 +94,7 @@ export class Connection {
             case Action.JOINED: {                                  // create client if it is new client
 
                 console.log('a new user has joined', user);
-                this.game.world.addObject('chicken', 'client', user.l, user.id, user.name);
+                this.game.world.addObject(user.template, 'client', user.l, user.id, user.name);
                 break;
             }
             case Action.LEFT: {                                    // create client if it is new client

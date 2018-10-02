@@ -10,8 +10,13 @@ export module PixiUtils {
     {
         // tslint:disable-next-line:no-inferrable-types
         const file: string = `assets/images/${spritesheet}.json`;
-        const textures: Array<Texture> = resources[file].textures;
-
+        try {
+            const textures: Array<Texture> = resources[file].textures;
+        }
+        catch {
+            console.log('unable to retrieve spritesheet');
+            debugger;
+        }
         if (!frameNumbers) return textures;                                   // if no frame numbers were selected, send all frames
 
         const frames: Array<Texture> = frameNumbers.map((num) => {            // turn the array of numbers into an array of textures

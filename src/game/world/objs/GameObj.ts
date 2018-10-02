@@ -15,6 +15,7 @@ export class GameObj {
     public quiver = 0;                             // set this to non-zero (or set rotation to non-zero) to make the object 'quiver' and make it more noticable
     public idleCount = 0;                          // when reaches 2 seconds, idle animation will play
     public animation = 'stand';                    // what animation is active? stand walk idle dead
+    public facing = 'side';                        // what direction is character facing?
 
     // physics
     public collision: PIXI.Point = new PIXI.Point(0, 0);   // -1 or 1 for x or y showing collision
@@ -70,20 +71,29 @@ export class GameObj {
         this.s.addChild(this.label);
     }
 
-    animate(animation: string) {
-        if (this.animation === animation) return;
+    animate(animation: string, facing?: string) {
+        if (this.animation === animation && this.facing === facing) return;
 
-        // load the frames for animation in and start playing... ie: stand walk idle death
-        this.s.textures = this.getAnimationTextures(animation);
+        try {
+            // load the frames for animation in and start playing... ie: stand_up walk_down idle death
+            this.s.textures = this.getAnimationTextures(animation + '_' + facing);
+        }
+        catch {
+            // failure to find animations facing direction specified
+            this.s.textures = this.getAnimationTextures(animation);          // try without facing that direction
+            facing = 'side';
+        }
+
         this.s.gotoAndPlay(0);
         this.s.loop = true;
         this.animation = animation;
+        this.facing = facing;
     }
 
     getAnimationTextures(animation): Array<Texture> {
 
         if (this.objTemplate.animations[animation] === undefined) {
-            // tslint:disable-next-line:no-debugger
+            throw 'animation not found';
         }
         return this.objTemplate.animations[animation].map((num) => {             // turn the array of numbers (that represent this animation) into an array of textures
             return this.objTemplate.textures[`${num}.png`];                      // find & return texture
@@ -96,8 +106,8 @@ export class GameObj {
         this.state();
 
         // update visual position of game object based on location actual
-        this.l.x = Math.round(this.l.x);
-        this.l.y = Math.round(this.l.y);
+        this.l.x = Math.round(this.l.x * 10) / 10;
+        this.l.y = Math.round(this.l.y * 10) / 10;
 
         // update label based on horizontal flipping of sprite
         this.label.scale.x = this.s.scale.x > 0 ? 1 : -1;
@@ -148,10 +158,17 @@ export class GameObj {
         // boundaries
         F.boundary(this, new PIXI.Rectangle(0, 0, this.game.world.tile.width * this.game.world.map.width, this.game.world.tile.height * this.game.world.map.height), true);
 
+        // change facing direction
+        if (v.x === 0 && v.y < 0 || v.y < 0 && this.facing === 'down') this.animate(this.animation, 'up');
+        if (v.x === 0 && v.y > 0 || v.y > 0 && this.facing === 'up') this.animate(this.animation, 'down');
+        if (v.x !== 0 && v.y === 0) this.animate(this.animation, 'side');
+
         // visual based on local velocity (not actual velocity)
-        if (v.x !== 0 || v.y !== 0) this.animate('walk');
-        else if (this.animation !== 'idle') this.animate('stand');
-        if (v.x !== 0) s.scale.x = v.x < 0 ? this.objTemplate.scale : -this.objTemplate.scale;
+        if (v.x !== 0 || v.y !== 0) this.animate('walk', this.facing);
+        else if (this.animation !== 'idle') this.animate('stand', this.facing);
+
+        if (this.facing !== 'side') s.scale.x = this.objTemplate.scale;                                  // when facing up or down, no reason to flip image
+        else if (v.x !== 0) s.scale.x = v.x < 0 ? this.objTemplate.scale : -this.objTemplate.scale;      // flip image if moving left or right
 
         // objects that have rotation should quiver to make them more noticable
         this.quiver += this.s.rotation / 15;

@@ -37,15 +37,38 @@ export class Game {
         'assets/images/terrian-01.json',
         'assets/images/chick.json',
         'assets/images/egg.json',
-        'assets/map-001.json'
+        'assets/images/human-01.json',
+        'assets/images/benjiro-01.json',
+        'assets/map-002.json'
     ];
 
     public maps: Array<String> = [
-        'assets/map-001.json'
+        'assets/map-002.json'
     ];
+
+    public mapToLoad = 'map-002';
 
     public templates = new Dictionary<ObjTemplate>();
     private objTemplates = [   // do not reference direct.  reference Dictionary templates instead
+        {
+            name: 'human',
+            sheet: 'human-01',
+            animationSpeed: 0.2,
+            animations: {
+                stand: [61],
+                stand_up: [75],
+                stand_down: [45],
+                walk: [68, 67, 66, 67, 68, 65, 64, 63, 62, 63, 64, 65],
+                walk_down: [46, 47, 48, 53, 46, 45, 49, 50, 51, 52, 49, 45],
+                walk_up: [76, 77, 78, 79, 75, 80, 81, 82, 75],
+                idle: [61],
+                death: [60]
+            },
+            speedX: 2,
+            speedY: 1,
+            runModifier: 2,
+            textures: undefined
+        },
         {
             name: 'chicken',
             animationSpeed: 0.08,
@@ -121,7 +144,7 @@ export class Game {
 
         // create the world
         if (this.world) this.world.remove();                           // if not our first time connecting, remove the old world
-        this.world = new World(this, this.app, 'map-001', user);   // create a new world
+        this.world = new World(this, this.app, this.mapToLoad, user);   // create a new world
 
         if (!this.state) {
                                                      // is this our first time connecting?
@@ -171,10 +194,13 @@ export class Game {
         this.god += .0001;
 
         // sort sprites, lower on screen to the front
-        this.world.spriteContainer.children.sort((a, b) => a.position.y > b.position.y ? 1 : 0);
+        this.world.spriteContainer.children.sort((a, b) => {
+          if (a.position.y > b.position.y) return 1;
+          if (a.position.y < b.position.y) return -1;
+        });
 
         // control camera
-        this.world.container.scale.set(.7);
+        this.world.container.scale.set(this.app.screen.width / 2000);
         if (this.world.player) {
             // place camera on player
             const camera = new PIXI.Point(this.world.player.x, this.world.player.y);
