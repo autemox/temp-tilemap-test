@@ -5,13 +5,13 @@ import { Player } from './world/objs/Player';
 import { NPC } from './world/objs/NPC';
 import { F } from './utils/F';
 import { debug } from 'util';
+import { Layer } from './model/Layer';
 declare var PIXI: any; // instead of importing pixi like some tutorials say to do use declare
 
 export class UI {
 
     // UI
-    public pauseGameKey = F.keyboard(27);                    // ESC key
-    public pauseMessage: Text = new PIXI.Text('Paused');     // Message to display while game is paused
+    public debugKey = F.keyboard(27);                    // ESC key
 
     // debugging
     public message: PIXI.Text;                               // Message to display in top left corner (for debugging)
@@ -31,22 +31,23 @@ export class UI {
             })
         );
         this.message.position.set(2, 2);
+        this.message.visible = this.game.debugMode;
         app.stage.addChild(this.message);
 
-        // allow pausing
-        this.pauseMessage.anchor.set(.5);
-        this.pauseMessage.position.set(app.screen.width / 2, app.screen.height / 2);
-        this.pauseGameKey.press = () => {
+        // allow debugging
+        this.debugKey.press = function() {
 
-            if (game.state === game.play) {
-                app.stage.addChild(this.pauseMessage);            // PAUSE THE GAME
-                game.state = game.pause;
+            this.game.debugMode = !this.game.debugMode;    // toggle debug
+            this.message.visible = this.game.debugMode;    // show or hide top left corner text
+            for (let i = 0, len = this.game.world.objs.length; i < len; i++) this.game.world.objs[i].debug();  // loop through game objects and update them
+
+            for (let m = 0, len = this.game.world.layers.length; m < len; m++)        // loop through layers and change collision layers to visible or not
+            {
+                const layer: Layer = this.game.world.layers[m];
+                console.log(layer);
+                if (layer.name === 'collision') layer.pixiTileMap.visible = this.game.debugMode;
             }
-            else {
-                app.stage.removeChild(this.pauseMessage);        // UNPAUSE THE GAME
-                game.state = game.play;
-            }
-        };
+        }.bind(this);
     }
 
     update() {

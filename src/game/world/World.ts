@@ -51,6 +51,7 @@ export class World {
             else {
 
                 console.log(`failed to add to textures.`);
+                // tslint:disable-next-line:no-debugger
                 debugger;
             }
         });
@@ -84,7 +85,8 @@ export class World {
                 case 'collision': {
 
                     // process collision layer
-                    layer.pixiTileMap.visible = false;                                    // hide layers labeled collision
+                    if (game.devMode) this.processVisibleLayer(mapData, layer, m);
+                    if (!game.debugMode) layer.pixiTileMap.visible = false;                                // hide layers labeled collision
                     break;
                 }
                 case 'Object':
@@ -111,32 +113,7 @@ export class World {
                 }
                 case 'Tile':
                 default: {
-
-                    // process visible layer
-                    let c = 0;
-                    for (let i = 0; i < mapData.height; i++) {
-
-                        for (let j = 0; j < mapData.width; j++, c++) {
-
-                            if (typeof(layer.data) === 'undefined') {
-                                // tslint:disable-next-line:no-debugger
-                                debugger;
-                            }
-                            if (layer.data[c] !== 0 && layer.data[c] !== undefined)
-                            {
-                                const sheet: TileSet = this.getTileSet(this.tilesets, layer.data[c]);
-                                try {
-                                    const text: Texture = PixiUtils.getFrame(PIXI.loader.resources, sheet.source, layer.data[c] - sheet.firstgid);
-                                    layer.pixiTileMap.addFrame(text, j * this.tile.width, i * this.tile.height);
-                                }
-                                catch {
-                                    // tslint:disable-next-line:no-debugger
-                                    debugger;
-                                }
-                            }
-                        }
-                    }
-                    this.container.addChild(this.layers[m].pixiTileMap);
+                    this.processVisibleLayer(mapData, layer, m);
                     break;
                 }
             }
@@ -144,12 +121,45 @@ export class World {
         this.app.stage.addChild(this.container);                             // add container to the stage
         this.container.on('mouseover', () => console.log('test'));           // Pointers normalize touch and mouse
 
-        // set minimize stage size using an empty sprite
-        const texture: Texture = PIXI.loader.resources['assets/images/chicken.json'].textures['0.png'];
-        const defStage = new PIXI.Sprite(texture);
+        // set stage size using empty sprites
+        let texture: Texture = PIXI.loader.resources['assets/images/chick.json'].textures['1.png'];
+        let defStage = new PIXI.Sprite(texture);
         defStage.position.set(this.map.width * this.tile.width, this.map.height * this.tile.height);
         app.stage.addChild(defStage);
+        texture = PIXI.loader.resources['assets/images/chick.json'].textures['1.png'];
+        defStage = new PIXI.Sprite(texture);
+        defStage.position.set(0, 0);
+        app.stage.addChild(defStage);
 
+    }
+
+    public processVisibleLayer(mapData, layer, m) {
+
+        // process visible layer
+        let c = 0;
+        for (let i = 0; i < mapData.height; i++) {
+
+            for (let j = 0; j < mapData.width; j++, c++) {
+
+                if (typeof(layer.data) === 'undefined') {
+                    // tslint:disable-next-line:no-debugger
+                    debugger;
+                }
+                if (layer.data[c] !== 0 && layer.data[c] !== undefined)
+                {
+                    const sheet: TileSet = this.getTileSet(this.tilesets, layer.data[c]);
+                    try {
+                        const text: Texture = PixiUtils.getFrame(PIXI.loader.resources, sheet.source, layer.data[c] - sheet.firstgid);
+                        layer.pixiTileMap.addFrame(text, j * this.tile.width, i * this.tile.height);
+                    }
+                    catch {
+                        // tslint:disable-next-line:no-debugger
+                        debugger;
+                    }
+                }
+            }
+        }
+        this.container.addChild(this.layers[m].pixiTileMap);
     }
 
     public addObject(templateName: string, type: string, p, id: number, name?: string) {

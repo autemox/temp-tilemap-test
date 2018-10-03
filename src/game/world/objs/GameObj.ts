@@ -27,6 +27,7 @@ export class GameObj {
     get facing(): Direction { return this._facing; }
 
     // physics
+    public collisionRectangle: PIXI.Rectangle;        // the boundaries of collision
     public collision: PIXI.Point = new PIXI.Point(0, 0);   // -1 or 1 for x or y showing collision
     public v: PIXI.Point = new PIXI.Point(0, 0);      // velocity
     public l: PIXI.Point = new PIXI.Point(0, 0);      // location (actual, not display)
@@ -34,6 +35,9 @@ export class GameObj {
     set x(x: number) { this.l.x = x; }
     get y(): number { return this.l.y; }
     set y(y: number) { this.l.y = y; }
+
+    // debug
+    public boundingRectangle = new PIXI.Graphics();  // the boundaries of collision
 
     // running
     public runCounter = 0;                            // when runCounter > 0 the speed of the object moves faster and counter counts down to 0
@@ -78,8 +82,27 @@ export class GameObj {
         this.label.resolution = 2;
         this.label.position.set(0, - this.s.height * 1.5);
         this.label.anchor.set(0.5);
-        this.label.visible = false;
+        this.label.visible = this.game.debugMode;
         this.s.addChild(this.label);
+
+        // initiate collision rectangle based on sprite size
+        this.collisionRectangle = new PIXI.Rectangle(-this.s.width * 0.35, -this.s.height * 0.35, this.s.width * 0.7, this.s.height * 0.35);
+
+        // draw that rectangle if needed
+        if (game.devMode) {
+            this.boundingRectangle.lineStyle(4, 0xFF3300, 1);
+            this.boundingRectangle.drawRect(this.collisionRectangle.x, this.collisionRectangle.y, this.collisionRectangle.width, this.collisionRectangle.height);
+            this.boundingRectangle.x = 0;
+            this.boundingRectangle.y = 0;
+            this.boundingRectangle.visible = this.game.debugMode;
+            this.s.addChild(this.boundingRectangle);
+        }
+    }
+
+    // debug mode has been toggled
+    public debug() {
+        this.boundingRectangle.visible = this.game.debugMode;  // show or hide boundingbox
+        this.label.visible = this.game.debugMode;
     }
 
     face(facing: Direction) {
@@ -155,17 +178,55 @@ export class GameObj {
             this.objTemplate.speedY);
     }
 
+    EightPointCollision(futureBox): Boolean {                                // check collision with a box using 8 key points on that box
+
+        if (                                                                 // check all 4 corners of a box
+            this.game.world.mapCollision(futureBox.x,                       futureBox.y) ||
+            this.game.world.mapCollision(futureBox.x + futureBox.width,     futureBox.y) ||
+            this.game.world.mapCollision(futureBox.x + futureBox.width,     futureBox.y + futureBox.height) ||
+            this.game.world.mapCollision(futureBox.x,                       futureBox.y + futureBox.height)) {
+
+            return true;
+        }
+
+        if (this.game.world.tile.width > futureBox.width &&
+            this.game.world.tile.height > futureBox.height) return false;    // for sprites smaller than a tile we are done
+
+
+        if (                                                                // for sprites larger than a tile, need to check intermediate points: top center, bottom center, left center, right center
+            this.game.world.mapCollision(futureBox.x + futureBox.width / 2, futureBox.y) ||
+            this.game.world.mapCollision(futureBox.x + futureBox.width,     futureBox.y + futureBox.width / 2) ||
+            this.game.world.mapCollision(futureBox.x + futureBox.width / 2, futureBox.y + futureBox.height) ||
+            this.game.world.mapCollision(futureBox.x,                       futureBox.y + futureBox.height / 2)) {
+
+            return true;
+        }
+
+        return false;
+    }
+
     alive() {
         const s = this.s;
 
-        // look for future collision
-        this.collision = new PIXI.Point(
-            this.game.world.mapCollision(this.x + this.v.x + (this.v.x > 0 ? s.width : -s.width) / 2, this.y) !== 0 ? this.v.x : 0,
-            this.game.world.mapCollision(this.x, this.y + this.v.y + (this.v.y > 0 ? s.height : -s.height) / 2) !== 0 ? this.v.y : 0
-        );
+        // look for collision
+        const box = new PIXI.Rectangle(                                  // this is a box that represents the game objects location
+            this.collisionRectangle.left + this.x,
+            this.collisionRectangle.top + this.y,
+            this.collisionRectangle.width,
+            this.collisionRectangle.height);
 
-        // look for complete collision (check to see if sprite is BUGGED inside of a collidable)
-        if (this.game.world.mapCollision(this.x, this.y)) this.y += 5;
+        let futureBox = new PIXI.Rectangle(box.x + this.v.x, box.y, box.width, box.height);                // check horizontal collision (if only vx is applied to box)
+        if (this.EightPointCollision(futureBox)) this.collision.x = this.v.x = 0;                    // going to collide horizontally
+
+        futureBox = new PIXI.Rectangle(box.x + this.v.x, box.y + this.v.y, box.width, box.height);   // check diagnol collision (if both vx and vy are applied to box) - note we don't just apply vy only because sometimes diagnol movement causes collision that wouldnt be detected with vx or vy individually ie coming at the tile's corner at a diagnol
+        if (this.EightPointCollision(futureBox)) this.collision.y = this.v.y = 0;                    // going to collide vertically/diagnolly.  note that this.collision is a point that turns to 1 in the x or y direction if there is a collision in the x or y direction
+
+        // look for glitch / character stuck in wall
+        futureBox = new PIXI.Rectangle(box.x, box.y, box.width, box.height);                         // check for current collision (IF GAME IS BUGGED OUT) and move character downward until it is gone
+        if (this.EightPointCollision(futureBox)) {
+
+                this.y += 5;
+        }
 
         // physics
         if (!this.collision.x) this.x += this.v.x;                       // move actual
@@ -249,7 +310,7 @@ export class GameObj {
 
     onMouseOut() {
 
-        this.label.visible = false;
+        if (!this.game.debugMode) this.label.visible = false;
     }
 
     onClick() {

@@ -23,6 +23,8 @@ export class Game {
     public state: Function;                            // state of the game ie play, pause
     public ui: UI;
     public mouseFocused: Boolean;
+    public devMode = true;                             // when on, collision layer will be rendered but hidden until debug mode is enabled
+    public debugMode = true;                           // when on, collision layer will not be hidden and bounding boxes on sprites will render
 
     // connection and networking
     public connection: Connection;
