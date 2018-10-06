@@ -1,3 +1,4 @@
+import { Application } from 'pixi.js';
 declare var PIXI: any;                                         // instead of importing pixi like some tutorials say to do use declare b/c we are on angular 6
 
 export class Game {
